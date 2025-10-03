@@ -4,11 +4,11 @@ const { makeURLSearchParams } = require('@discordjs/rest');
 const { lazy } = require('@discordjs/util');
 const { DiscordSnowflake } = require('@sapphire/snowflake');
 const { Routes, WebhookType } = require('discord-api-types/v10');
-const { DiscordjsError, ErrorCodes } = require('../errors/index.js');
-const { resolveImage } = require('../util/DataResolver.js');
-const { MessagePayload } = require('./MessagePayload.js');
+const MessagePayload = require('./MessagePayload');
+const { DiscordjsError, ErrorCodes } = require('../errors');
+const { resolveImage } = require('../util/DataResolver');
 
-const getMessage = lazy(() => require('./Message.js').Message);
+const getMessage = lazy(() => require('./Message').Message);
 
 /**
  * Represents a webhook.
@@ -17,7 +17,6 @@ class Webhook {
   constructor(client, data) {
     /**
      * The client that instantiated the webhook
-     *
      * @name Webhook#client
      * @type {Client}
      * @readonly
@@ -30,7 +29,6 @@ class Webhook {
     if ('name' in data) {
       /**
        * The name of the webhook
-       *
        * @type {string}
        */
       this.name = data.name;
@@ -38,7 +36,6 @@ class Webhook {
 
     /**
      * The token for the webhook, unavailable for follower webhooks and webhooks owned by another application.
-     *
      * @name Webhook#token
      * @type {?string}
      */
@@ -51,7 +48,6 @@ class Webhook {
     if ('avatar' in data) {
       /**
        * The avatar for the webhook
-       *
        * @type {?string}
        */
       this.avatar = data.avatar;
@@ -59,7 +55,6 @@ class Webhook {
 
     /**
      * The webhook's id
-     *
      * @type {Snowflake}
      */
     this.id = data.id;
@@ -67,7 +62,6 @@ class Webhook {
     if ('type' in data) {
       /**
        * The type of the webhook
-       *
        * @type {WebhookType}
        */
       this.type = data.type;
@@ -76,7 +70,6 @@ class Webhook {
     if ('guild_id' in data) {
       /**
        * The guild the webhook belongs to
-       *
        * @type {Snowflake}
        */
       this.guildId = data.guild_id;
@@ -85,7 +78,6 @@ class Webhook {
     if ('channel_id' in data) {
       /**
        * The id of the channel the webhook belongs to
-       *
        * @type {Snowflake}
        */
       this.channelId = data.channel_id;
@@ -94,7 +86,6 @@ class Webhook {
     if ('user' in data) {
       /**
        * The owner of the webhook
-       *
        * @type {?(User|APIUser)}
        */
       this.owner = this.client.users?._add(data.user) ?? data.user;
@@ -105,7 +96,6 @@ class Webhook {
     if ('application_id' in data) {
       /**
        * The application that created this webhook
-       *
        * @type {?Snowflake}
        */
       this.applicationId = data.application_id;
@@ -116,7 +106,6 @@ class Webhook {
     if ('source_guild' in data) {
       /**
        * The source guild of the webhook
-       *
        * @type {?(Guild|APIGuild)}
        */
       this.sourceGuild = this.client.guilds?.cache.get(data.source_guild.id) ?? data.source_guild;
@@ -127,8 +116,7 @@ class Webhook {
     if ('source_channel' in data) {
       /**
        * The source channel of the webhook
-       *
-       * @type {?(AnnouncementChannel|APIChannel)}
+       * @type {?(NewsChannel|APIChannel)}
        */
       this.sourceChannel = this.client.channels?.cache.get(data.source_channel?.id) ?? data.source_channel;
     } else {
@@ -138,11 +126,10 @@ class Webhook {
 
   /**
    * Options that can be passed into send.
-   *
    * @typedef {BaseMessageOptionsWithPoll} WebhookMessageCreateOptions
    * @property {boolean} [tts=false] Whether the message should be spoken aloud
    * @property {MessageFlags} [flags] Which flags to set for the message.
-   * <info>Only {@link MessageFlags.SuppressEmbeds} and {@link MessageFlags.IsVoiceMessage} can be set.</info>
+   * <info>Only the {@link MessageFlags.SuppressEmbeds} flag can be set.</info>
    * @property {string} [username=this.name] Username override for the message
    * @property {string} [avatarURL] Avatar URL override for the message
    * @property {Snowflake} [threadId] The id of the thread in the channel to send to.
@@ -156,18 +143,14 @@ class Webhook {
 
   /**
    * Options that can be passed into editMessage.
-   *
    * @typedef {MessageEditOptions} WebhookMessageEditOptions
    * @property {Snowflake} [threadId] The id of the thread this message belongs to
    * <info>For interaction webhooks, this property is ignored</info>
-   * @property {boolean} [withComponents] Whether to allow sending non-interactive components in the message.
-   * <info>For application-owned webhooks, this property is ignored</info>
    */
 
   /**
    * The channel the webhook belongs to
-   *
-   * @type {?(TextChannel|VoiceChannel|StageChannel|AnnouncementChannel|ForumChannel|MediaChannel)}
+   * @type {?(TextChannel|VoiceChannel|StageChannel|NewsChannel|ForumChannel|MediaChannel)}
    * @readonly
    */
   get channel() {
@@ -176,7 +159,6 @@ class Webhook {
 
   /**
    * Sends a message with this webhook.
-   *
    * @param {string|MessagePayload|WebhookMessageCreateOptions} options The options to provide
    * @returns {Promise<Message>}
    * @example
@@ -192,7 +174,7 @@ class Webhook {
    * @example
    * // Send a remote file
    * webhook.send({
-   *   files: ['https://github.com/discordjs.png']
+   *   files: ['https://cdn.discordapp.com/icons/222078108977594368/6e1019b3179d71046e463a75915e7244.png?size=2048']
    * })
    *   .then(console.log)
    *   .catch(console.error);
@@ -234,30 +216,27 @@ class Webhook {
       messagePayload = MessagePayload.create(this, options).resolveBody();
     }
 
+    const { body, files } = await messagePayload.resolveFiles();
+
     const query = makeURLSearchParams({
       wait: true,
       thread_id: messagePayload.options.threadId,
       with_components: messagePayload.options.withComponents,
     });
 
-    const { body, files } = await messagePayload.resolveFiles();
-    const data = await this.client.rest.post(Routes.webhook(this.id, this.token), {
+    const d = await this.client.rest.post(Routes.webhook(this.id, this.token), {
       body,
       files,
       query,
       auth: false,
     });
 
-    if (!this.client.channels) return data;
-    return (
-      this.client.channels.cache.get(data.channel_id)?.messages._add(data, false) ??
-      new (getMessage())(this.client, data)
-    );
+    if (!this.client.channels) return d;
+    return this.client.channels.cache.get(d.channel_id)?.messages._add(d, false) ?? new (getMessage())(this.client, d);
   }
 
   /**
    * Sends a raw slack message with this webhook.
-   *
    * @param {Object} body The raw body to send
    * @returns {Promise<boolean>}
    * @example
@@ -287,7 +266,6 @@ class Webhook {
 
   /**
    * Options used to edit a {@link Webhook}.
-   *
    * @typedef {Object} WebhookEditOptions
    * @property {string} [name=this.name] The new name for the webhook
    * @property {?(BufferResolvable)} [avatar] The new avatar for the webhook
@@ -298,17 +276,14 @@ class Webhook {
 
   /**
    * Edits this webhook.
-   *
    * @param {WebhookEditOptions} options Options for editing the webhook
    * @returns {Promise<Webhook>}
    */
-  async edit({ name = this.name, avatar: newAvatar, channel: newChannel, reason }) {
-    let avatar = newAvatar;
+  async edit({ name = this.name, avatar, channel, reason }) {
     if (avatar && !(typeof avatar === 'string' && avatar.startsWith('data:'))) {
       avatar = await resolveImage(avatar);
     }
-
-    const channel = newChannel?.id ?? newChannel;
+    channel &&= channel.id ?? channel;
     const data = await this.client.rest.patch(Routes.webhook(this.id, channel ? undefined : this.token), {
       body: { name, avatar, channel_id: channel },
       reason,
@@ -323,16 +298,16 @@ class Webhook {
 
   /**
    * Options that can be passed into fetchMessage.
-   *
    * @typedef {options} WebhookFetchMessageOptions
    * @property {boolean} [cache=true] Whether to cache the message.
    * @property {Snowflake} [threadId] The id of the thread this message belongs to.
    * <info>For interaction webhooks, this property is ignored</info>
+   * @property {boolean} [withComponents] Whether to allow sending non-interactive components in the message.
+   * <info>For application-owned webhooks, this property is ignored</info>
    */
 
   /**
    * Gets a message that was sent by this webhook.
-   *
    * @param {Snowflake|'@original'} message The id of the message to fetch
    * @param {WebhookFetchMessageOptions} [options={}] The options to provide to fetch the message.
    * @returns {Promise<Message>} Returns the message sent by this webhook
@@ -354,7 +329,6 @@ class Webhook {
 
   /**
    * Edits a message that was sent by this webhook.
-   *
    * @param {MessageResolvable|'@original'} message The message to edit
    * @param {string|MessagePayload|WebhookMessageEditOptions} options The options to provide
    * @returns {Promise<Message>} Returns the message edited by this webhook
@@ -374,7 +348,7 @@ class Webhook {
       with_components: messagePayload.options.withComponents,
     });
 
-    const data = await this.client.rest.patch(
+    const d = await this.client.rest.patch(
       Routes.webhookMessage(this.id, this.token, typeof message === 'string' ? message : message.id),
       {
         body,
@@ -385,32 +359,30 @@ class Webhook {
     );
 
     const channelManager = this.client.channels;
-    if (!channelManager) return data;
+    if (!channelManager) return d;
 
-    const messageManager = channelManager.cache.get(data.channel_id)?.messages;
-    if (!messageManager) return new (getMessage())(this.client, data);
+    const messageManager = channelManager.cache.get(d.channel_id)?.messages;
+    if (!messageManager) return new (getMessage())(this.client, d);
 
-    const existing = messageManager.cache.get(data.id);
-    if (!existing) return messageManager._add(data);
+    const existing = messageManager.cache.get(d.id);
+    if (!existing) return messageManager._add(d);
 
     const clone = existing._clone();
-    clone._patch(data);
+    clone._patch(d);
     return clone;
   }
 
   /**
    * Deletes the webhook.
-   *
    * @param {string} [reason] Reason for deleting this webhook
    * @returns {Promise<void>}
    */
-  async delete(reason) {
+  delete(reason) {
     return this.client.deleteWebhook(this.id, { token: this.token, reason });
   }
 
   /**
    * Delete a message that was sent by this webhook.
-   *
    * @param {MessageResolvable|'@original'} message The message to delete
    * @param {Snowflake} [threadId] The id of the thread this message belongs to
    * @returns {Promise<void>}
@@ -429,7 +401,6 @@ class Webhook {
 
   /**
    * The timestamp the webhook was created at
-   *
    * @type {number}
    * @readonly
    */
@@ -439,7 +410,6 @@ class Webhook {
 
   /**
    * The time the webhook was created at
-   *
    * @type {Date}
    * @readonly
    */
@@ -449,7 +419,6 @@ class Webhook {
 
   /**
    * The URL of this webhook
-   *
    * @type {string}
    * @readonly
    */
@@ -459,7 +428,6 @@ class Webhook {
 
   /**
    * A link to the webhook's avatar.
-   *
    * @param {ImageURLOptions} [options={}] Options for the image URL
    * @returns {?string}
    */
@@ -469,7 +437,6 @@ class Webhook {
 
   /**
    * Whether this webhook is created by a user.
-   *
    * @returns {boolean}
    */
   isUserCreated() {
@@ -478,7 +445,6 @@ class Webhook {
 
   /**
    * Whether this webhook is created by an application.
-   *
    * @returns {boolean}
    */
   isApplicationCreated() {
@@ -487,7 +453,6 @@ class Webhook {
 
   /**
    * Whether or not this webhook is a channel follower webhook.
-   *
    * @returns {boolean}
    */
   isChannelFollower() {
@@ -496,7 +461,6 @@ class Webhook {
 
   /**
    * Whether or not this webhook is an incoming webhook.
-   *
    * @returns {boolean}
    */
   isIncoming() {
@@ -522,4 +486,4 @@ class Webhook {
   }
 }
 
-exports.Webhook = Webhook;
+module.exports = Webhook;

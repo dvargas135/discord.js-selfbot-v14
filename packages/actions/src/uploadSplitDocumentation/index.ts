@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-loop-func */
 import { readFile } from 'node:fs/promises';
 import { basename, dirname, relative, sep } from 'node:path';
 import process from 'node:process';
@@ -5,6 +6,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { setFailed, getInput } from '@actions/core';
 import { create } from '@actions/glob';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { put } from '@vercel/blob';
 import PQueue from 'p-queue';
 
 if (
@@ -46,6 +48,10 @@ for await (const file of globber.globGenerator()) {
 				const name = basename(file).replace('main.', '');
 				async function upload(retries = 0) {
 					try {
+						await put(`rewrite/${pkgName}/${version}.${name}`, data, {
+							access: 'public',
+							addRandomSuffix: false,
+						});
 						await S3.send(
 							new PutObjectCommand({
 								Bucket: process.env.CF_R2_DOCS_BUCKET,

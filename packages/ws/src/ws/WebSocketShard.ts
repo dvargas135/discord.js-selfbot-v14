@@ -304,7 +304,6 @@ export class WebSocketShard extends AsyncEventEmitter<WebSocketShardEventsMap> {
 			return;
 		}
 
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		if (!options.code) {
 			options.code = options.recover === WebSocketShardDestroyRecovery.Resume ? CloseCodes.Resuming : CloseCodes.Normal;
 		}
@@ -668,23 +667,10 @@ export class WebSocketShard extends AsyncEventEmitter<WebSocketShardEventsMap> {
 				this.zLibSyncInflate.push(Buffer.from(decompressable), flush ? zLibSync.Z_SYNC_FLUSH : zLibSync.Z_NO_FLUSH);
 
 				if (this.zLibSyncInflate.err) {
-					// Must be here because zlib-sync is lazily loaded
-					const ZlibErrorCodes = {
-						[zLibSync.Z_NEED_DICT]: 'Z_NEED_DICT',
-						[zLibSync.Z_STREAM_END]: 'Z_STREAM_END',
-						[zLibSync.Z_ERRNO]: 'Z_ERRNO',
-						[zLibSync.Z_STREAM_ERROR]: 'Z_STREAM_ERROR',
-						[zLibSync.Z_DATA_ERROR]: 'Z_DATA_ERROR',
-						[zLibSync.Z_MEM_ERROR]: 'Z_MEM_ERROR',
-						[zLibSync.Z_BUF_ERROR]: 'Z_BUF_ERROR',
-						[zLibSync.Z_VERSION_ERROR]: 'Z_VERSION_ERROR',
-					} as const satisfies Record<number, string>;
-
-					// Try to match nodejs zlib errors as much as possible
-					const error: NodeJS.ErrnoException = new Error(this.zLibSyncInflate.msg ?? undefined);
-					error.errno = this.zLibSyncInflate.err;
-					error.code = ZlibErrorCodes[this.zLibSyncInflate.err];
-					this.emit(WebSocketShardEvents.Error, error);
+					this.emit(
+						WebSocketShardEvents.Error,
+						new Error(`${this.zLibSyncInflate.err}${this.zLibSyncInflate.msg ? `: ${this.zLibSyncInflate.msg}` : ''}`),
+					);
 				}
 
 				if (!flush) {
@@ -718,7 +704,7 @@ export class WebSocketShard extends AsyncEventEmitter<WebSocketShardEventsMap> {
 					this.replayedEvents++;
 				}
 
-				// eslint-disable-next-line sonarjs/no-nested-switch, @typescript-eslint/switch-exhaustiveness-check
+				// eslint-disable-next-line sonarjs/no-nested-switch
 				switch (payload.t) {
 					case GatewayDispatchEvents.Ready: {
 						this.#status = WebSocketShardStatus.Ready;

@@ -1,4 +1,4 @@
-/* eslint-disable unicorn/no-empty-file */
+/* eslint-disable max-len */
 
 /**
  * @external ActivityFlags
@@ -231,18 +231,18 @@
  */
 
 /**
- * @external APISelectMenuOption
- * @see {@link https://discord-api-types.dev/api/discord-api-types-v10/interface/APISelectMenuOption}
- */
-
-/**
- * @external APISelectMenuDefaultValue
- * @see {@link https://discord-api-types.dev/api/discord-api-types-v10/interface/APISelectMenuDefaultValue}
- */
-
-/**
  * @external APISectionComponent
  * @see {@link https://discord-api-types.dev/api/discord-api-types-v10/interface/APISectionComponent}
+ */
+
+/**
+ * @external APISeparatorComponent
+ * @see {@link https://discord-api-types.dev/api/discord-api-types-v10/interface/APISeparatorComponent}
+ */
+
+/**
+ * @external APISelectMenuOption
+ * @see {@link https://discord-api-types.dev/api/discord-api-types-v10/interface/APISelectMenuOption}
  */
 
 /**
@@ -391,10 +391,6 @@
  */
 
 /**
- * @external GatewayDispatchPayload
- * @see {@link https://discord-api-types.dev/api/discord-api-types-v10#GatewayDispatchPayload}
- */
-/**
  * @external GatewayIntentBits
  * @see {@link https://discord-api-types.dev/api/discord-api-types-v10/enum/GatewayIntentBits}
  */
@@ -520,11 +516,6 @@
  */
 
 /**
- * @external InviteFlags
- * @see {@link https://discord-api-types.dev/api/discord-api-types-v10/enum/InviteFlags}
- */
-
-/**
  * @external InviteType
  * @see {@link https://discord-api-types.dev/api/discord-api-types-v10/enum/InviteType}
  */
@@ -537,11 +528,6 @@
 /**
  * @external Locale
  * @see {@link https://discord-api-types.dev/api/discord-api-types-v10/enum/Locale}
- */
-
-/**
- * @external LocalizationMap
- * @see {@link https://discord-api-types.dev/api/discord-api-types-v10#LocalizationMap}
  */
 
 /**
@@ -657,11 +643,6 @@
 /**
  * @external ThreadAutoArchiveDuration
  * @see {@link https://discord-api-types.dev/api/discord-api-types-v10/enum/ThreadAutoArchiveDuration}
- */
-
-/**
- * @external ThreadMemberFlags
- * @see {@link https://discord-api-types.dev/api/discord-api-types-v10/enum/ThreadMemberFlags}
  */
 
 /**

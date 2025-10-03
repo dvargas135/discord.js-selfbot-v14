@@ -1,161 +1,182 @@
 'use strict';
 
-const { ErrorCodes } = require('./ErrorCodes.js');
+const DjsErrorCodes = require('./ErrorCodes');
 
 const Messages = {
-  [ErrorCodes.ClientInvalidOption]: (prop, must) => `The ${prop} option must be ${must}`,
-  [ErrorCodes.ClientInvalidProvidedShards]: 'None of the provided shards were valid.',
-  [ErrorCodes.ClientMissingIntents]: 'Valid intents must be provided for the Client.',
-  [ErrorCodes.ClientNotReady]: action => `The client needs to be logged in to ${action}.`,
+  [DjsErrorCodes.ClientInvalidOption]: (prop, must) => `The ${prop} option must be ${must}`,
+  [DjsErrorCodes.ClientInvalidProvidedShards]: 'None of the provided shards were valid.',
+  [DjsErrorCodes.ClientMissingIntents]: 'Valid intents must be provided for the Client.',
+  [DjsErrorCodes.ClientNotReady]: action => `The client needs to be logged in to ${action}.`,
 
-  [ErrorCodes.TokenInvalid]: 'An invalid token was provided.',
-  [ErrorCodes.TokenMissing]: 'Request to use token, but token was unavailable to the client.',
-  [ErrorCodes.ApplicationCommandPermissionsTokenMissing]:
+  [DjsErrorCodes.TokenInvalid]: 'An invalid token was provided.',
+  [DjsErrorCodes.TokenMissing]: 'Request to use token, but token was unavailable to the client.',
+  [DjsErrorCodes.ApplicationCommandPermissionsTokenMissing]:
     'Editing application command permissions requires an OAuth2 bearer token, but none was provided.',
 
-  [ErrorCodes.BitFieldInvalid]: bit => `Invalid bitfield flag or number: ${bit}.`,
+  [DjsErrorCodes.WSCloseRequested]: 'WebSocket closed due to user request.',
+  [DjsErrorCodes.WSConnectionExists]: 'There is already an existing WebSocket connection.',
+  [DjsErrorCodes.WSNotOpen]: (data = 'data') => `WebSocket not open to send ${data}`,
+  [DjsErrorCodes.ManagerDestroyed]: 'Manager was destroyed.',
 
-  [ErrorCodes.ShardingNoShards]: 'No shards have been spawned.',
-  [ErrorCodes.ShardingInProcess]: 'Shards are still being spawned.',
-  [ErrorCodes.ShardingInvalidEvalBroadcast]: 'Script to evaluate must be a function',
-  [ErrorCodes.ShardingShardNotFound]: id => `Shard ${id} could not be found.`,
-  [ErrorCodes.ShardingAlreadySpawned]: count => `Already spawned ${count} shards.`,
-  [ErrorCodes.ShardingProcessExists]: id => `Shard ${id} already has an active process.`,
-  [ErrorCodes.ShardingWorkerExists]: id => `Shard ${id} already has an active worker.`,
-  [ErrorCodes.ShardingReadyTimeout]: id => `Shard ${id}'s Client took too long to become ready.`,
-  [ErrorCodes.ShardingReadyDisconnected]: id => `Shard ${id}'s Client disconnected before becoming ready.`,
-  [ErrorCodes.ShardingReadyDied]: id => `Shard ${id}'s process exited before its Client became ready.`,
-  [ErrorCodes.ShardingNoChildExists]: id => `Shard ${id} has no active process or worker.`,
-  [ErrorCodes.ShardingShardMiscalculation]: (shard, guild, count) =>
+  [DjsErrorCodes.BitFieldInvalid]: bit => `Invalid bitfield flag or number: ${bit}.`,
+
+  [DjsErrorCodes.ShardingInvalid]: 'Invalid shard settings were provided.',
+  [DjsErrorCodes.ShardingRequired]: 'This session would have handled too many guilds - Sharding is required.',
+  [DjsErrorCodes.InvalidIntents]: 'Invalid intent provided for WebSocket intents.',
+  [DjsErrorCodes.DisallowedIntents]: 'Privileged intent provided is not enabled or whitelisted.',
+  [DjsErrorCodes.ShardingNoShards]: 'No shards have been spawned.',
+  [DjsErrorCodes.ShardingInProcess]: 'Shards are still being spawned.',
+  [DjsErrorCodes.ShardingInvalidEvalBroadcast]: 'Script to evaluate must be a function',
+  [DjsErrorCodes.ShardingShardNotFound]: id => `Shard ${id} could not be found.`,
+  [DjsErrorCodes.ShardingAlreadySpawned]: count => `Already spawned ${count} shards.`,
+  [DjsErrorCodes.ShardingProcessExists]: id => `Shard ${id} already has an active process.`,
+  [DjsErrorCodes.ShardingWorkerExists]: id => `Shard ${id} already has an active worker.`,
+  [DjsErrorCodes.ShardingReadyTimeout]: id => `Shard ${id}'s Client took too long to become ready.`,
+  [DjsErrorCodes.ShardingReadyDisconnected]: id => `Shard ${id}'s Client disconnected before becoming ready.`,
+  [DjsErrorCodes.ShardingReadyDied]: id => `Shard ${id}'s process exited before its Client became ready.`,
+  [DjsErrorCodes.ShardingNoChildExists]: id => `Shard ${id} has no active process or worker.`,
+  [DjsErrorCodes.ShardingShardMiscalculation]: (shard, guild, count) =>
     `Calculated invalid shard ${shard} for guild ${guild} with ${count} shards.`,
 
-  [ErrorCodes.ColorRange]: 'Color must be within the range 0 - 16777215 (0xFFFFFF).',
-  [ErrorCodes.ColorConvert]: color => `Unable to convert "${color}" to a number.`,
+  [DjsErrorCodes.ColorRange]: 'Color must be within the range 0 - 16777215 (0xFFFFFF).',
+  [DjsErrorCodes.ColorConvert]: color => `Unable to convert "${color}" to a number.`,
 
-  [ErrorCodes.InviteOptionsMissingChannel]:
+  [DjsErrorCodes.InviteOptionsMissingChannel]:
     'A valid guild channel must be provided when GuildScheduledEvent is EXTERNAL.',
 
-  [ErrorCodes.InteractionCollectorError]: reason =>
+  [DjsErrorCodes.ButtonLabel]: 'MessageButton label must be a string',
+  [DjsErrorCodes.ButtonURL]: 'MessageButton URL must be a string',
+  [DjsErrorCodes.ButtonCustomId]: 'MessageButton customId must be a string',
+
+  [DjsErrorCodes.SelectMenuCustomId]: 'MessageSelectMenu customId must be a string',
+  [DjsErrorCodes.SelectMenuPlaceholder]: 'MessageSelectMenu placeholder must be a string',
+  [DjsErrorCodes.SelectOptionLabel]: 'MessageSelectOption label must be a string',
+  [DjsErrorCodes.SelectOptionValue]: 'MessageSelectOption value must be a string',
+  [DjsErrorCodes.SelectOptionDescription]: 'MessageSelectOption description must be a string',
+
+  [DjsErrorCodes.InteractionCollectorError]: reason =>
     `Collector received no interactions before ending with reason: ${reason}`,
 
-  [ErrorCodes.FileNotFound]: file => `File could not be found: ${file}`,
+  [DjsErrorCodes.FileNotFound]: file => `File could not be found: ${file}`,
 
-  [ErrorCodes.UserNoDMChannel]: 'No DM Channel exists!',
+  [DjsErrorCodes.UserBannerNotFetched]: "You must fetch this user's banner before trying to generate its URL!",
+  [DjsErrorCodes.UserNoDMChannel]: 'No DM Channel exists!',
 
-  [ErrorCodes.VoiceNotStageChannel]: 'You are only allowed to do this in stage channels.',
+  [DjsErrorCodes.VoiceNotStageChannel]: 'You are only allowed to do this in stage channels.',
 
-  [ErrorCodes.VoiceStateNotOwn]:
+  [DjsErrorCodes.VoiceStateNotOwn]:
     'You cannot self-deafen/mute/request to speak on VoiceStates that do not belong to the ClientUser.',
-  [ErrorCodes.VoiceStateInvalidType]: name => `${name} must be a boolean.`,
+  [DjsErrorCodes.VoiceStateInvalidType]: name => `${name} must be a boolean.`,
 
-  [ErrorCodes.ReqResourceType]: 'The resource must be a string, Buffer or a valid file stream.',
+  [DjsErrorCodes.ReqResourceType]: 'The resource must be a string, Buffer or a valid file stream.',
 
-  [ErrorCodes.MessageBulkDeleteType]: 'The messages must be an Array, Collection, or number.',
-  [ErrorCodes.MessageContentType]: 'Message content must be a string.',
-  [ErrorCodes.MessageNonceRequired]: 'Message nonce is required when enforceNonce is true.',
-  [ErrorCodes.MessageNonceType]: 'Message nonce must be an integer or a string.',
+  [DjsErrorCodes.ImageFormat]: format => `Invalid image format: ${format}`,
+  [DjsErrorCodes.ImageSize]: size => `Invalid image size: ${size}`,
 
-  [ErrorCodes.BanResolveId]: (ban = false) => `Couldn't resolve the user id to ${ban ? 'ban' : 'unban'}.`,
-  [ErrorCodes.FetchBanResolveId]: "Couldn't resolve the user id to fetch the ban.",
+  [DjsErrorCodes.MessageBulkDeleteType]: 'The messages must be an Array, Collection, or number.',
+  [DjsErrorCodes.MessageContentType]: 'Message content must be a string.',
+  [DjsErrorCodes.MessageNonceRequired]: 'Message nonce is required when enforceNonce is true.',
+  [DjsErrorCodes.MessageNonceType]: 'Message nonce must be an integer or a string.',
 
-  [ErrorCodes.PruneDaysType]: 'Days must be a number',
+  [DjsErrorCodes.SplitMaxLen]: 'Chunk exceeds the max length and contains no split characters.',
 
-  [ErrorCodes.GuildChannelResolve]: 'Could not resolve channel to a guild channel.',
-  [ErrorCodes.GuildVoiceChannelResolve]: 'Could not resolve channel to a guild voice channel.',
-  [ErrorCodes.GuildChannelOrphan]: 'Could not find a parent to this guild channel.',
-  [ErrorCodes.GuildChannelUnowned]: "The fetched channel does not belong to this manager's guild.",
-  [ErrorCodes.GuildOwned]: 'Guild is owned by the client.',
-  [ErrorCodes.GuildMembersTimeout]: "Members didn't arrive in time.",
-  [ErrorCodes.GuildSoundboardSoundsTimeout]: "Soundboard sounds didn't arrive in time.",
-  [ErrorCodes.GuildUncachedMe]: 'The client user as a member of this guild is uncached.',
-  [ErrorCodes.ChannelNotCached]: 'Could not find the channel where this message came from in the cache!',
-  [ErrorCodes.StageChannelResolve]: 'Could not resolve channel to a stage channel.',
-  [ErrorCodes.GuildScheduledEventResolve]: 'Could not resolve the guild scheduled event.',
-  [ErrorCodes.FetchOwnerId]: type => `Couldn't resolve the ${type} ownerId to fetch the ${type} member.`,
+  [DjsErrorCodes.BanResolveId]: (ban = false) => `Couldn't resolve the user id to ${ban ? 'ban' : 'unban'}.`,
+  [DjsErrorCodes.FetchBanResolveId]: "Couldn't resolve the user id to fetch the ban.",
 
-  [ErrorCodes.InvalidType]: (name, expected, an = false) => `Supplied ${name} is not a${an ? 'n' : ''} ${expected}.`,
-  [ErrorCodes.InvalidElement]: (type, name, elem) => `Supplied ${type} ${name} includes an invalid element: ${elem}`,
+  [DjsErrorCodes.PruneDaysType]: 'Days must be a number',
 
-  [ErrorCodes.MessageThreadParent]: 'The message was not sent in a guild text or announcement channel',
-  [ErrorCodes.MessageExistingThread]: 'The message already has a thread',
-  [ErrorCodes.ThreadInvitableType]: type => `Invitable cannot be edited on ${type}`,
-  [ErrorCodes.NotAThreadOfParent]: 'Provided ThreadChannelResolvable is not a thread of the parent channel.',
+  [DjsErrorCodes.GuildChannelResolve]: 'Could not resolve channel to a guild channel.',
+  [DjsErrorCodes.GuildVoiceChannelResolve]: 'Could not resolve channel to a guild voice channel.',
+  [DjsErrorCodes.GuildChannelOrphan]: 'Could not find a parent to this guild channel.',
+  [DjsErrorCodes.GuildChannelUnowned]: "The fetched channel does not belong to this manager's guild.",
+  [DjsErrorCodes.GuildOwned]: 'Guild is owned by the client.',
+  [DjsErrorCodes.GuildMembersTimeout]: "Members didn't arrive in time.",
+  [DjsErrorCodes.GuildSoundboardSoundsTimeout]: "Soundboard sounds didn't arrive in time.",
+  [DjsErrorCodes.GuildUncachedMe]: 'The client user as a member of this guild is uncached.',
+  [DjsErrorCodes.ChannelNotCached]: 'Could not find the channel where this message came from in the cache!',
+  [DjsErrorCodes.StageChannelResolve]: 'Could not resolve channel to a stage channel.',
+  [DjsErrorCodes.GuildScheduledEventResolve]: 'Could not resolve the guild scheduled event.',
+  [DjsErrorCodes.FetchOwnerId]: type =>
+    `Couldn't resolve the ${type} ownerId to fetch the ${type} ${type === 'group DM' ? 'owner' : 'member'}.`,
 
-  [ErrorCodes.WebhookMessage]: 'The message was not sent by a webhook.',
-  [ErrorCodes.WebhookTokenUnavailable]: 'This action requires a webhook token, but none is available.',
-  [ErrorCodes.WebhookURLInvalid]: 'The provided webhook URL is not valid.',
-  [ErrorCodes.WebhookApplication]: 'This message webhook belongs to an application and cannot be fetched.',
+  [DjsErrorCodes.InvalidType]: (name, expected, an = false) => `Supplied ${name} is not a${an ? 'n' : ''} ${expected}.`,
+  [DjsErrorCodes.InvalidElement]: (type, name, elem) => `Supplied ${type} ${name} includes an invalid element: ${elem}`,
 
-  [ErrorCodes.MessageReferenceMissing]: 'The message does not reference another message',
+  [DjsErrorCodes.MessageThreadParent]: 'The message was not sent in a guild text or news channel',
+  [DjsErrorCodes.MessageExistingThread]: 'The message already has a thread',
+  [DjsErrorCodes.ThreadInvitableType]: type => `Invitable cannot be edited on ${type}`,
 
-  [ErrorCodes.EmojiType]: 'Emoji must be a string or GuildEmoji/ReactionEmoji',
-  [ErrorCodes.EmojiManaged]: 'Emoji is managed and has no Author.',
-  [ErrorCodes.MissingManageGuildExpressionsPermission]: guild =>
+  [DjsErrorCodes.WebhookMessage]: 'The message was not sent by a webhook.',
+  [DjsErrorCodes.WebhookTokenUnavailable]: 'This action requires a webhook token, but none is available.',
+  [DjsErrorCodes.WebhookURLInvalid]: 'The provided webhook URL is not valid.',
+  [DjsErrorCodes.WebhookApplication]: 'This message webhook belongs to an application and cannot be fetched.',
+  [DjsErrorCodes.MessageReferenceMissing]: 'The message does not reference another message',
+
+  [DjsErrorCodes.EmojiType]: 'Emoji must be a string or GuildEmoji/ReactionEmoji',
+  [DjsErrorCodes.EmojiManaged]: 'Emoji is managed and has no Author.',
+  [DjsErrorCodes.MissingManageGuildExpressionsPermission]: guild =>
     `Client must have Manage Guild Expressions permission in guild ${guild} to see emoji authors.`,
+  [DjsErrorCodes.MissingManageEmojisAndStickersPermission]: guild =>
+    `Client must have Manage Emojis and Stickers permission in guild ${guild} to see emoji authors.`,
 
-  [ErrorCodes.NotGuildSoundboardSound]: action =>
+  [DjsErrorCodes.NotGuildSoundboardSound]: action =>
     `Soundboard sound is a default (non-guild) soundboard sound and can't be ${action}.`,
-  [ErrorCodes.NotGuildSticker]: 'Sticker is a standard (non-guild) sticker and has no author.',
+  [DjsErrorCodes.NotGuildSticker]: 'Sticker is a standard (non-guild) sticker and has no author.',
 
-  [ErrorCodes.ReactionResolveUser]: "Couldn't resolve the user id to remove from the reaction.",
+  [DjsErrorCodes.ReactionResolveUser]: "Couldn't resolve the user id to remove from the reaction.",
 
-  [ErrorCodes.InviteResolveCode]: 'Could not resolve the code to fetch the invite.',
-  [ErrorCodes.InviteNotFound]: 'Could not find the requested invite.',
+  [DjsErrorCodes.VanityURL]: 'This guild does not have the vanity URL feature enabled.',
 
-  [ErrorCodes.DeleteGroupDMChannel]: "Bots don't have access to Group DM Channels and cannot delete them",
-  [ErrorCodes.FetchGroupDMChannel]: "Bots don't have access to Group DM Channels and cannot fetch them",
+  [DjsErrorCodes.InviteResolveCode]: 'Could not resolve the code to fetch the invite.',
 
-  [ErrorCodes.MemberFetchNonceLength]: 'Nonce length must not exceed 32 characters.',
+  [DjsErrorCodes.InviteNotFound]: 'Could not find the requested invite.',
 
-  [ErrorCodes.GlobalCommandPermissions]:
+  [DjsErrorCodes.DeleteGroupDMChannel]: "Bots don't have access to Group DM Channels and cannot delete them",
+  [DjsErrorCodes.FetchGroupDMChannel]: "Bots don't have access to Group DM Channels and cannot fetch them",
+
+  [DjsErrorCodes.MemberFetchNonceLength]: 'Nonce length must not exceed 32 characters.',
+
+  [DjsErrorCodes.GlobalCommandPermissions]:
     'Permissions for global commands may only be fetched or modified by providing a GuildResolvable ' +
     "or from a guild's application command manager.",
-  [ErrorCodes.GuildUncachedEntityResolve]: type =>
+  [DjsErrorCodes.GuildUncachedEntityResolve]: type =>
     `Cannot resolve ${type} from an arbitrary guild, provide an id instead`,
 
-  [ErrorCodes.InteractionAlreadyReplied]: 'The reply to this interaction has already been sent or deferred.',
-  [ErrorCodes.InteractionNotReplied]: 'The reply to this interaction has not been sent or deferred.',
+  [DjsErrorCodes.InteractionAlreadyReplied]: 'The reply to this interaction has already been sent or deferred.',
+  [DjsErrorCodes.InteractionNotReplied]: 'The reply to this interaction has not been sent or deferred.',
+  [DjsErrorCodes.InteractionEphemeralReplied]: 'Ephemeral responses cannot be deleted.',
 
-  [ErrorCodes.CommandInteractionOptionNotFound]: name => `Required option "${name}" not found.`,
-  [ErrorCodes.CommandInteractionOptionType]: (name, type, expected) =>
+  [DjsErrorCodes.CommandInteractionOptionNotFound]: name => `Required option "${name}" not found.`,
+  [DjsErrorCodes.CommandInteractionOptionType]: (name, type, expected) =>
     `Option "${name}" is of type: ${type}; expected ${expected}.`,
-  [ErrorCodes.CommandInteractionOptionEmpty]: (name, type) =>
+  [DjsErrorCodes.CommandInteractionOptionEmpty]: (name, type) =>
     `Required option "${name}" is of type: ${type}; expected a non-empty value.`,
-  [ErrorCodes.CommandInteractionOptionNoSubcommand]: 'No subcommand specified for interaction.',
-  [ErrorCodes.CommandInteractionOptionNoSubcommandGroup]: 'No subcommand group specified for interaction.',
-  [ErrorCodes.CommandInteractionOptionInvalidChannelType]: (name, type, expected) =>
+  [DjsErrorCodes.CommandInteractionOptionNoSubcommand]: 'No subcommand specified for interaction.',
+  [DjsErrorCodes.CommandInteractionOptionNoSubcommandGroup]: 'No subcommand group specified for interaction.',
+  [DjsErrorCodes.CommandInteractionOptionInvalidChannelType]: (name, type, expected) =>
     `The type of channel of the option "${name}" is: ${type}; expected ${expected}.`,
-  [ErrorCodes.AutocompleteInteractionOptionNoFocusedOption]: 'No focused option for autocomplete interaction.',
+  [DjsErrorCodes.AutocompleteInteractionOptionNoFocusedOption]: 'No focused option for autocomplete interaction.',
 
-  [ErrorCodes.ModalSubmitInteractionComponentNotFound]: customId =>
-    `Required component with custom id "${customId}" not found.`,
-  [ErrorCodes.ModalSubmitInteractionComponentType]: (customId, type, expected) =>
-    `Component with custom id "${customId}" is of type: ${type}; expected ${expected}.`,
-  [ErrorCodes.ModalSubmitInteractionComponentEmpty]: (customId, type) =>
-    `Required component with custom id "${customId}" is of type: ${type}; expected a non-empty value.`,
-  [ErrorCodes.ModalSubmitInteractionComponentInvalidChannelType]: (customId, type, expected) =>
-    `The type of channel of the component with custom id "${customId}" is: ${type}; expected ${expected}.`,
+  [DjsErrorCodes.ModalSubmitInteractionFieldNotFound]: customId =>
+    `Required field with custom id "${customId}" not found.`,
+  [DjsErrorCodes.ModalSubmitInteractionFieldType]: (customId, type, expected) =>
+    `Field with custom id "${customId}" is of type: ${type}; expected ${expected}.`,
 
-  [ErrorCodes.InvalidMissingScopes]: 'At least one valid scope must be provided for the invite',
-  [ErrorCodes.InvalidScopesWithPermissions]: 'Permissions cannot be set without the bot scope.',
+  [DjsErrorCodes.InvalidMissingScopes]: 'At least one valid scope must be provided for the invite',
+  [DjsErrorCodes.InvalidScopesWithPermissions]: 'Permissions cannot be set without the bot scope.',
 
-  [ErrorCodes.NotImplemented]: (what, name) => `Method ${what} not implemented on ${name}.`,
+  [DjsErrorCodes.NotImplemented]: (what, name) => `Method ${what} not implemented on ${name}.`,
 
-  [ErrorCodes.SweepFilterReturn]: 'The return value of the sweepFilter function was not false or a Function',
+  [DjsErrorCodes.SweepFilterReturn]: 'The return value of the sweepFilter function was not false or a Function',
 
-  [ErrorCodes.GuildForumMessageRequired]: 'You must provide a message to create a guild forum thread',
+  [DjsErrorCodes.GuildForumMessageRequired]: 'You must provide a message to create a guild forum thread',
 
-  [ErrorCodes.EntitlementCreateInvalidOwner]:
+  [DjsErrorCodes.EntitlementCreateInvalidOwner]:
     'You must provide either a guild or a user to create an entitlement, but not both',
 
-  [ErrorCodes.BulkBanUsersOptionEmpty]: 'Option "users" array or collection is empty',
+  [DjsErrorCodes.BulkBanUsersOptionEmpty]: 'Option "users" array or collection is empty',
 
-  [ErrorCodes.PollAlreadyExpired]: 'This poll has already expired.',
-
-  [ErrorCodes.PermissionOverwritesTypeMandatory]: '"overwrite.type" is mandatory if "overwrite.id" is a Snowflake',
-  [ErrorCodes.PermissionOverwritesTypeMismatch]: expected =>
-    `"overwrite.id" is a ${expected.toLowerCase()} object, ` +
-    `but "overwrite.type" is defined and not equal to OverwriteType.${expected}`,
+  [DjsErrorCodes.PollAlreadyExpired]: 'This poll has already expired.',
 };
 
-exports.Messages = Messages;
+module.exports = Messages;

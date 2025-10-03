@@ -1,11 +1,11 @@
 'use strict';
 
-const { ThreadMemberFlagsBitField } = require('../util/ThreadMemberFlagsBitField.js');
-const { Base } = require('./Base.js');
+const Base = require('./Base');
+const ThreadMemberFlagsBitField = require('../util/ThreadMemberFlagsBitField');
+const { emitDeprecationWarningForRemoveThreadMember } = require('../util/Util');
 
 /**
  * Represents a Member for a Thread.
- *
  * @extends {Base}
  */
 class ThreadMember extends Base {
@@ -14,28 +14,24 @@ class ThreadMember extends Base {
 
     /**
      * The thread that this member is a part of
-     *
      * @type {ThreadChannel}
      */
     this.thread = thread;
 
     /**
      * The timestamp the member last joined the thread at
-     *
      * @type {?number}
      */
     this.joinedTimestamp = null;
 
     /**
      * The flags for this thread member. This will be `null` if partial.
-     *
      * @type {?ThreadMemberFlagsBitField}
      */
     this.flags = null;
 
     /**
      * The id of the thread member
-     *
      * @type {Snowflake}
      */
     this.id = data.user_id;
@@ -50,7 +46,6 @@ class ThreadMember extends Base {
     if ('member' in data) {
       /**
        * The guild member associated with this thread member.
-       *
        * @type {?GuildMember}
        * @private
        */
@@ -62,7 +57,6 @@ class ThreadMember extends Base {
 
   /**
    * Whether this thread member is a partial
-   *
    * @type {boolean}
    * @readonly
    */
@@ -72,7 +66,6 @@ class ThreadMember extends Base {
 
   /**
    * The guild member associated with this thread member
-   *
    * @type {?GuildMember}
    * @readonly
    */
@@ -82,7 +75,6 @@ class ThreadMember extends Base {
 
   /**
    * The last time this member joined the thread
-   *
    * @type {?Date}
    * @readonly
    */
@@ -92,7 +84,6 @@ class ThreadMember extends Base {
 
   /**
    * The user associated with this thread member
-   *
    * @type {?User}
    * @readonly
    */
@@ -102,7 +93,6 @@ class ThreadMember extends Base {
 
   /**
    * Whether the client user can manage this thread member
-   *
    * @type {boolean}
    * @readonly
    */
@@ -112,13 +102,18 @@ class ThreadMember extends Base {
 
   /**
    * Removes this member from the thread.
-   *
+   * @param {string} [reason] Reason for removing the member
+   * <warn>This parameter is **deprecated**. Reasons cannot be used.</warn>
    * @returns {Promise<ThreadMember>}
    */
-  async remove() {
-    await this.thread.members.remove(this.id);
+  async remove(reason) {
+    if (reason !== undefined) {
+      emitDeprecationWarningForRemoveThreadMember(this.constructor.name);
+    }
+
+    await this.thread.members.remove(this.id, reason);
     return this;
   }
 }
 
-exports.ThreadMember = ThreadMember;
+module.exports = ThreadMember;

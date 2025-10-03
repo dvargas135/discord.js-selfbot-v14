@@ -2,14 +2,13 @@
 
 const { Collection } = require('@discordjs/collection');
 const { Routes } = require('discord-api-types/v10');
-const { DiscordjsTypeError, ErrorCodes } = require('../errors/index.js');
-const { MessagePayload } = require('../structures/MessagePayload.js');
-const { Sticker } = require('../structures/Sticker.js');
-const { CachedManager } = require('./CachedManager.js');
+const CachedManager = require('./CachedManager');
+const { DiscordjsTypeError, ErrorCodes } = require('../errors');
+const MessagePayload = require('../structures/MessagePayload');
+const { Sticker } = require('../structures/Sticker');
 
 /**
  * Manages API methods for Guild Stickers and stores their cache.
- *
  * @extends {CachedManager}
  */
 class GuildStickerManager extends CachedManager {
@@ -18,7 +17,6 @@ class GuildStickerManager extends CachedManager {
 
     /**
      * The guild this manager belongs to
-     *
      * @type {Guild}
      */
     this.guild = guild;
@@ -26,7 +24,6 @@ class GuildStickerManager extends CachedManager {
 
   /**
    * The cache of Guild Stickers
-   *
    * @type {Collection<Snowflake, Sticker>}
    * @name GuildStickerManager#cache
    */
@@ -37,7 +34,6 @@ class GuildStickerManager extends CachedManager {
 
   /**
    * Options used to create a guild sticker.
-   *
    * @typedef {Object} GuildStickerCreateOptions
    * @property {AttachmentPayload|BufferResolvable|Stream} file The file for the sticker
    * @property {string} name The name for the sticker
@@ -48,7 +44,6 @@ class GuildStickerManager extends CachedManager {
 
   /**
    * Creates a new custom sticker in the guild.
-   *
    * @param {GuildStickerCreateOptions} options Options for creating a guild sticker
    * @returns {Promise<Sticker>} The created sticker
    * @example
@@ -64,14 +59,15 @@ class GuildStickerManager extends CachedManager {
    */
   async create({ file, name, tags, description, reason } = {}) {
     const resolvedFile = await MessagePayload.resolveFile(file);
-    resolvedFile.key = 'file';
+    if (!resolvedFile) throw new DiscordjsTypeError(ErrorCodes.ReqResourceType);
+    file = { ...resolvedFile, key: 'file' };
 
     const body = { name, tags, description: description ?? '' };
 
     const sticker = await this.client.rest.post(Routes.guildStickers(this.guild.id), {
       appendToFormData: true,
       body,
-      files: [resolvedFile],
+      files: [file],
       reason,
     });
     return this.client.actions.GuildStickerCreate.handle(this.guild, sticker).sticker;
@@ -79,15 +75,13 @@ class GuildStickerManager extends CachedManager {
 
   /**
    * Data that resolves to give a Sticker object. This can be:
-   * - A Sticker object
-   * - A Snowflake
-   *
+   * * A Sticker object
+   * * A Snowflake
    * @typedef {Sticker|Snowflake} StickerResolvable
    */
 
   /**
    * Resolves a StickerResolvable to a Sticker object.
-   *
    * @method resolve
    * @memberof GuildStickerManager
    * @instance
@@ -97,7 +91,6 @@ class GuildStickerManager extends CachedManager {
 
   /**
    * Resolves a StickerResolvable to a Sticker id string.
-   *
    * @method resolveId
    * @memberof GuildStickerManager
    * @instance
@@ -107,7 +100,6 @@ class GuildStickerManager extends CachedManager {
 
   /**
    * Edits a sticker.
-   *
    * @param {StickerResolvable} sticker The sticker to edit
    * @param {GuildStickerEditOptions} [options={}] The new data for the sticker
    * @returns {Promise<Sticker>}
@@ -116,7 +108,7 @@ class GuildStickerManager extends CachedManager {
     const stickerId = this.resolveId(sticker);
     if (!stickerId) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'sticker', 'StickerResolvable');
 
-    const data = await this.client.rest.patch(Routes.guildSticker(this.guild.id, stickerId), {
+    const d = await this.client.rest.patch(Routes.guildSticker(this.guild.id, stickerId), {
       body: options,
       reason: options.reason,
     });
@@ -124,30 +116,27 @@ class GuildStickerManager extends CachedManager {
     const existing = this.cache.get(stickerId);
     if (existing) {
       const clone = existing._clone();
-      clone._patch(data);
+      clone._patch(d);
       return clone;
     }
-
-    return this._add(data);
+    return this._add(d);
   }
 
   /**
    * Deletes a sticker.
-   *
    * @param {StickerResolvable} sticker The sticker to delete
    * @param {string} [reason] Reason for deleting this sticker
    * @returns {Promise<void>}
    */
   async delete(sticker, reason) {
-    const resolvedStickerId = this.resolveId(sticker);
-    if (!resolvedStickerId) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'sticker', 'StickerResolvable');
+    sticker = this.resolveId(sticker);
+    if (!sticker) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'sticker', 'StickerResolvable');
 
-    await this.client.rest.delete(Routes.guildSticker(this.guild.id, resolvedStickerId), { reason });
+    await this.client.rest.delete(Routes.guildSticker(this.guild.id, sticker), { reason });
   }
 
   /**
    * Obtains one or more stickers from Discord, or the sticker cache if they're already available.
-   *
    * @param {Snowflake} [id] The Sticker's id
    * @param {BaseFetchOptions} [options] Additional options for this fetch
    * @returns {Promise<Sticker|Collection<Snowflake, Sticker>>}
@@ -168,7 +157,6 @@ class GuildStickerManager extends CachedManager {
         const existing = this.cache.get(id);
         if (existing) return existing;
       }
-
       const sticker = await this.client.rest.get(Routes.guildSticker(this.guild.id, id));
       return this._add(sticker, cache);
     }
@@ -179,17 +167,16 @@ class GuildStickerManager extends CachedManager {
 
   /**
    * Fetches the user who uploaded this sticker, if this is a guild sticker.
-   *
    * @param {StickerResolvable} sticker The sticker to fetch the user for
    * @returns {Promise<?User>}
    */
   async fetchUser(sticker) {
-    const resolvedSticker = this.resolve(sticker);
-    if (!resolvedSticker) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'sticker', 'StickerResolvable');
-    const data = await this.client.rest.get(Routes.guildSticker(this.guild.id, resolvedSticker.id));
-    resolvedSticker._patch(data);
-    return resolvedSticker.user;
+    sticker = this.resolve(sticker);
+    if (!sticker) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'sticker', 'StickerResolvable');
+    const data = await this.client.rest.get(Routes.guildSticker(this.guild.id, sticker.id));
+    sticker._patch(data);
+    return sticker.user;
   }
 }
 
-exports.GuildStickerManager = GuildStickerManager;
+module.exports = GuildStickerManager;

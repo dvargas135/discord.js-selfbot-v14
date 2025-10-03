@@ -83,7 +83,8 @@ export class RunAction extends CommandLineAction {
 		});
 	}
 
-	protected override async onExecuteAsync(): Promise<void> {
+	protected async onExecute(): Promise<void> {
+		// override
 		const lookup: PackageJsonLookup = new PackageJsonLookup();
 		let configFilename: string;
 

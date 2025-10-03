@@ -1,28 +1,26 @@
 'use strict';
 
 const { PermissionFlagsBits, Routes } = require('discord-api-types/v10');
-const { BaseGuildVoiceChannel } = require('./BaseGuildVoiceChannel.js');
+const BaseGuildVoiceChannel = require('./BaseGuildVoiceChannel');
 
 /**
  * Represents a guild voice channel on Discord.
- *
  * @extends {BaseGuildVoiceChannel}
  */
 class VoiceChannel extends BaseGuildVoiceChannel {
   /**
    * Whether the channel is joinable by the client user
-   *
    * @type {boolean}
    * @readonly
    */
   get joinable() {
     if (!super.joinable) return false;
-    return !this.full || this.permissionsFor(this.client.user).has(PermissionFlagsBits.MoveMembers, false);
+    if (this.full && !this.permissionsFor(this.client.user).has(PermissionFlagsBits.MoveMembers, false)) return false;
+    return true;
   }
 
   /**
    * Checks if the client has permission to send audio to the voice channel
-   *
    * @type {boolean}
    * @readonly
    */
@@ -46,7 +44,6 @@ class VoiceChannel extends BaseGuildVoiceChannel {
 
   /**
    * Send a soundboard sound to a voice channel the user is connected to.
-   *
    * @param {SoundboardSound|SendSoundboardSoundOptions} sound The sound to send
    * @returns {Promise<void>}
    */
@@ -62,7 +59,6 @@ class VoiceChannel extends BaseGuildVoiceChannel {
 
 /**
  * Sets the bitrate of the channel.
- *
  * @method setBitrate
  * @memberof VoiceChannel
  * @instance
@@ -78,7 +74,6 @@ class VoiceChannel extends BaseGuildVoiceChannel {
 
 /**
  * Sets the RTC region of the channel.
- *
  * @method setRTCRegion
  * @memberof VoiceChannel
  * @instance
@@ -95,7 +90,6 @@ class VoiceChannel extends BaseGuildVoiceChannel {
 
 /**
  * Sets the user limit of the channel.
- *
  * @method setUserLimit
  * @memberof VoiceChannel
  * @instance
@@ -111,7 +105,6 @@ class VoiceChannel extends BaseGuildVoiceChannel {
 
 /**
  * Sets the camera video quality mode of the channel.
- *
  * @method setVideoQualityMode
  * @memberof VoiceChannel
  * @instance
@@ -120,4 +113,4 @@ class VoiceChannel extends BaseGuildVoiceChannel {
  * @returns {Promise<VoiceChannel>}
  */
 
-exports.VoiceChannel = VoiceChannel;
+module.exports = VoiceChannel;

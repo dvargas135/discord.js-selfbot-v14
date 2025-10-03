@@ -6,7 +6,7 @@ export default defineConfig({
 		passWithNoTests: true,
 		typecheck: {
 			enabled: true,
-			tsconfig: './tsconfig.test.json',
+			include: ['**/__tests__/types.test.ts'],
 		},
 		coverage: {
 			enabled: true,

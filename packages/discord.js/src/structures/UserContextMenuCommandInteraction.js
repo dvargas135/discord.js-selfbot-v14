@@ -1,16 +1,14 @@
 'use strict';
 
-const { ContextMenuCommandInteraction } = require('./ContextMenuCommandInteraction.js');
+const ContextMenuCommandInteraction = require('./ContextMenuCommandInteraction');
 
 /**
  * Represents a user context menu interaction.
- *
  * @extends {ContextMenuCommandInteraction}
  */
 class UserContextMenuCommandInteraction extends ContextMenuCommandInteraction {
   /**
    * The target user from this interaction
-   *
    * @type {User}
    * @readonly
    */
@@ -20,7 +18,6 @@ class UserContextMenuCommandInteraction extends ContextMenuCommandInteraction {
 
   /**
    * The target member from this interaction
-   *
    * @type {?(GuildMember|APIGuildMember)}
    * @readonly
    */
@@ -29,4 +26,4 @@ class UserContextMenuCommandInteraction extends ContextMenuCommandInteraction {
   }
 }
 
-exports.UserContextMenuCommandInteraction = UserContextMenuCommandInteraction;
+module.exports = UserContextMenuCommandInteraction;

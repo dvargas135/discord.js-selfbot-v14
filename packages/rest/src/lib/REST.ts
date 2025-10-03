@@ -3,13 +3,11 @@ import { DiscordSnowflake } from '@sapphire/snowflake';
 import { AsyncEventEmitter } from '@vladfrangu/async_event_emitter';
 import { filetypeinfo } from 'magic-bytes.js';
 import type { RequestInit, BodyInit, Dispatcher } from 'undici';
-import { v5 as uuidV5 } from 'uuid';
 import { CDN } from './CDN.js';
 import { BurstHandler } from './handlers/BurstHandler.js';
 import { SequentialHandler } from './handlers/SequentialHandler.js';
 import type { IHandler } from './interfaces/Handler.js';
 import {
-	AUTH_UUID_NAMESPACE,
 	BurstHandlerMajorIdKey,
 	DefaultRestOptions,
 	DefaultUserAgent,
@@ -27,7 +25,6 @@ import type {
 	RequestHeaders,
 	RouteData,
 	RequestData,
-	AuthData,
 } from './utils/types.js';
 import { isBufferLike, parseResponse } from './utils/utils.js';
 
@@ -70,15 +67,15 @@ export class REST extends AsyncEventEmitter<RestEvents> {
 
 	#token: string | null = null;
 
-	private hashTimer!: NodeJS.Timeout | number;
+	private hashTimer!: NodeJS.Timer | number;
 
-	private handlerTimer!: NodeJS.Timeout | number;
+	private handlerTimer!: NodeJS.Timer | number;
 
 	public readonly options: RESTOptions;
 
 	public constructor(options: Partial<RESTOptions> = {}) {
 		super();
-		this.cdn = new CDN(options);
+		this.cdn = new CDN(options.cdn ?? DefaultRestOptions.cdn, options.mediaProxy ?? DefaultRestOptions.mediaProxy);
 		this.options = { ...DefaultRestOptions, ...options };
 		this.globalRemaining = Math.max(1, this.options.globalRequestsPerSecond);
 		this.agent = options.agent ?? null;
@@ -115,7 +112,7 @@ export class REST extends AsyncEventEmitter<RestEvents> {
 						sweptHashes.set(key, val);
 
 						// Emit debug information
-						this.emit(RESTEvents.Debug, `[REST] Hash ${val.value} for ${key} swept due to lifetime being exceeded`);
+						this.emit(RESTEvents.Debug, `Hash ${val.value} for ${key} swept due to lifetime being exceeded`);
 					}
 
 					return shouldSweep;
@@ -140,7 +137,7 @@ export class REST extends AsyncEventEmitter<RestEvents> {
 					// Collect inactive handlers
 					if (inactive) {
 						sweptHandlers.set(key, val);
-						this.emit(RESTEvents.Debug, `[REST] Handler ${val.id} for ${key} swept due to being inactive`);
+						this.emit(RESTEvents.Debug, `Handler ${val.id} for ${key} swept due to being inactive`);
 					}
 
 					return inactive;
@@ -243,11 +240,9 @@ export class REST extends AsyncEventEmitter<RestEvents> {
 	public async queueRequest(request: InternalRequest): Promise<ResponseLike> {
 		// Generalize the endpoint to its route data
 		const routeId = REST.generateRouteData(request.fullRoute, request.method);
-		const customAuth = typeof request.auth === 'object' && request.auth.token !== this.#token;
-		const auth = customAuth ? uuidV5((request.auth as AuthData).token, AUTH_UUID_NAMESPACE) : request.auth !== false;
 		// Get the bucket hash for the generic route, or point to a global route otherwise
-		const hash = this.hashes.get(`${request.method}:${routeId.bucketRoute}${customAuth ? `:${auth}` : ''}`) ?? {
-			value: `Global(${request.method}:${routeId.bucketRoute}${customAuth ? `:${auth}` : ''})`,
+		const hash = this.hashes.get(`${request.method}:${routeId.bucketRoute}`) ?? {
+			value: `Global(${request.method}:${routeId.bucketRoute})`,
 			lastAccess: -1,
 		};
 
@@ -263,7 +258,7 @@ export class REST extends AsyncEventEmitter<RestEvents> {
 		return handler.queueRequest(routeId, url, fetchOptions, {
 			body: request.body,
 			files: request.files,
-			auth,
+			auth: request.auth !== false,
 			signal: request.signal,
 		});
 	}
@@ -313,16 +308,12 @@ export class REST extends AsyncEventEmitter<RestEvents> {
 
 		// If this request requires authorization (allowing non-"authorized" requests for webhooks)
 		if (request.auth !== false) {
-			if (typeof request.auth === 'object') {
-				headers.Authorization = `${request.auth.prefix ?? this.options.authPrefix} ${request.auth.token}`;
-			} else {
-				// If we haven't received a token, throw an error
-				if (!this.#token) {
-					throw new Error('Expected token to be set for this request, but none was present');
-				}
-
-				headers.Authorization = `${this.options.authPrefix} ${this.#token}`;
+			// If we haven't received a token, throw an error
+			if (!this.#token) {
+				throw new Error('Expected token to be set for this request, but none was present');
 			}
+
+			headers.Authorization = `${request.authPrefix ?? this.options.authPrefix} ${this.#token}`;
 		}
 
 		// If a reason was set, set its appropriate header

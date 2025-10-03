@@ -14,7 +14,6 @@ export interface RestEvents {
 	restDebug: [info: string];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface RestEventsMap extends RestEvents {}
 
 /**
@@ -115,17 +114,11 @@ export interface RESTOptions {
 	 */
 	retries: number;
 	/**
-	 * The time to exponentially add before retrying a 5xx or aborted request
-	 *
-	 * @defaultValue `0`
-	 */
-	retryBackoff: GetRetryBackoffFunction | number;
-	/**
 	 * The time to wait in milliseconds before a request is aborted
 	 *
 	 * @defaultValue `15_000`
 	 */
-	timeout: GetTimeoutFunction | number;
+	timeout: number;
 	/**
 	 * Extra information to add to the user agent
 	 *
@@ -209,30 +202,6 @@ export type RateLimitQueueFilter = (rateLimitData: RateLimitData) => Awaitable<b
  */
 export type GetRateLimitOffsetFunction = (route: string) => number;
 
-/**
- * A function that determines the backoff for a retry for a given request.
- *
- * @param route - The route that has encountered a server-side error
- * @param statusCode - The status code received or `null` if aborted
- * @param retryCount - The number of retries that have been attempted so far. The first call will be `0`
- * @param requestBody - The body that was sent with the request
- * @returns The delay for the current request or `null` to throw an error instead of retrying
- */
-export type GetRetryBackoffFunction = (
-	route: string,
-	statusCode: number | null,
-	retryCount: number,
-	requestBody: unknown,
-) => number | null;
-
-/**
- * A function that determines the timeout for a given request.
- *
- * @param route - The route that is being processed
- * @param body - The body that will be sent with the request
- */
-export type GetTimeoutFunction = (route: string, body: unknown) => number;
-
 export interface APIRequest {
 	/**
 	 * The data that was used to form the body of this request
@@ -300,19 +269,6 @@ export interface RawFile {
 	name: string;
 }
 
-export interface AuthData {
-	/**
-	 * The authorization prefix to use for this request, useful if you use this with bearer tokens
-	 *
-	 * @defaultValue `REST.options.authPrefix`
-	 */
-	prefix?: 'Bearer' | 'Bot';
-	/**
-	 * The authorization token to use for this request
-	 */
-	token: string;
-}
-
 /**
  * Represents possible data to be given to an endpoint
  */
@@ -322,13 +278,17 @@ export interface RequestData {
 	 */
 	appendToFormData?: boolean;
 	/**
-	 * Alternate authorization data to use for this request only, or `false` to disable the Authorization header.
-	 * When making a request to a route that includes a token (such as interactions or webhooks), set to `false`
-	 * to avoid accidentally unsetting the instance token if a 401 is encountered.
+	 * If this request needs the `Authorization` header
 	 *
 	 * @defaultValue `true`
 	 */
-	auth?: AuthData | boolean | undefined;
+	auth?: boolean;
+	/**
+	 * The authorization prefix to use for this request, useful if you use this with bearer tokens
+	 *
+	 * @defaultValue `'Bot'`
+	 */
+	authPrefix?: 'Bearer' | 'Bot';
 	/**
 	 * The body to send to this request.
 	 * If providing as BodyInit, set `passThroughBody: true`
@@ -395,18 +355,20 @@ export type RouteLike = `/${string}`;
 
 /**
  * Internal request options
+ *
+ * @internal
  */
 export interface InternalRequest extends RequestData {
 	fullRoute: RouteLike;
 	method: RequestMethod;
 }
 
-export interface HandlerRequestData extends Pick<InternalRequest, 'body' | 'files' | 'signal'> {
-	auth: boolean | string;
-}
+export type HandlerRequestData = Pick<InternalRequest, 'auth' | 'body' | 'files' | 'signal'>;
 
 /**
  * Parsed route data for an endpoint
+ *
+ * @internal
  */
 export interface RouteData {
 	bucketRoute: string;
@@ -416,6 +378,8 @@ export interface RouteData {
 
 /**
  * Represents a hash and its associated fields
+ *
+ * @internal
  */
 export interface HashData {
 	lastAccess: number;

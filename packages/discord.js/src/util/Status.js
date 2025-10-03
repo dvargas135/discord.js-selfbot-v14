@@ -1,12 +1,18 @@
 'use strict';
 
-const { createEnum } = require('./Enums.js');
+const { createEnum } = require('./Enums');
 
 /**
  * @typedef {Object} Status
- * @property {number} Ready ready
- * @property {number} Idle idle
- * @property {number} WaitingForGuilds waiting for guilds
+ * @property {number} Ready
+ * @property {number} Connecting
+ * @property {number} Reconnecting
+ * @property {number} Idle
+ * @property {number} Nearly
+ * @property {number} Disconnected
+ * @property {number} WaitingForGuilds
+ * @property {number} Identifying
+ * @property {number} Resuming
  */
 
 // JSDoc for IntelliSense purposes
@@ -14,4 +20,14 @@ const { createEnum } = require('./Enums.js');
  * @type {Status}
  * @ignore
  */
-exports.Status = createEnum(['Ready', 'Idle', 'WaitingForGuilds']);
+module.exports = createEnum([
+  'Ready',
+  'Connecting',
+  'Reconnecting',
+  'Idle',
+  'Nearly',
+  'Disconnected',
+  'WaitingForGuilds',
+  'Identifying',
+  'Resuming',
+]);

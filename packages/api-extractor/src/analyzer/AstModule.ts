@@ -8,10 +8,10 @@ import type { AstSymbol } from './AstSymbol.js';
 /**
  * Represents information collected by {@link AstSymbolTable.fetchAstModuleExportInfo}
  */
-export interface IAstModuleExportInfo {
-	readonly exportedLocalEntities: Map<string, AstEntity>;
-	readonly starExportedExternalModules: Set<AstModule>;
-	readonly visitedAstModules: Set<AstModule>;
+export class AstModuleExportInfo {
+	public readonly exportedLocalEntities: Map<string, AstEntity> = new Map<string, AstEntity>();
+
+	public readonly starExportedExternalModules: Set<AstModule> = new Set<AstModule>();
 }
 
 /**
@@ -64,7 +64,7 @@ export class AstModule {
 	/**
 	 * Additional state calculated by `AstSymbolTable.fetchWorkingPackageModule()`.
 	 */
-	public astModuleExportInfo: IAstModuleExportInfo | undefined;
+	public astModuleExportInfo: AstModuleExportInfo | undefined;
 
 	public constructor(options: IAstModuleOptions) {
 		this.sourceFile = options.sourceFile;

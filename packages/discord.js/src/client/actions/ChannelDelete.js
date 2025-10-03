@@ -1,7 +1,7 @@
 'use strict';
 
-const { Events } = require('../../util/Events.js');
-const { Action } = require('./Action.js');
+const Action = require('./Action');
+const Events = require('../../util/Events');
 
 class ChannelDeleteAction extends Action {
   handle(data) {
@@ -12,7 +12,6 @@ class ChannelDeleteAction extends Action {
       client.channels._remove(channel.id);
       /**
        * Emitted whenever a channel is deleted.
-       *
        * @event Client#channelDelete
        * @param {DMChannel|GuildChannel} channel The channel that was deleted
        */
@@ -21,4 +20,4 @@ class ChannelDeleteAction extends Action {
   }
 }
 
-exports.ChannelDeleteAction = ChannelDeleteAction;
+module.exports = ChannelDeleteAction;

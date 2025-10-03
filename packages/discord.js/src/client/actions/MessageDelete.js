@@ -1,7 +1,7 @@
 'use strict';
 
-const { Events } = require('../../util/Events.js');
-const { Action } = require('./Action.js');
+const Action = require('./Action');
+const Events = require('../../util/Events');
 
 class MessageDeleteAction extends Action {
   handle(data) {
@@ -18,7 +18,6 @@ class MessageDeleteAction extends Action {
         channel.messages.cache.delete(message.id);
         /**
          * Emitted whenever a message is deleted.
-         *
          * @event Client#messageDelete
          * @param {Message} message The deleted message
          */
@@ -30,4 +29,4 @@ class MessageDeleteAction extends Action {
   }
 }
 
-exports.MessageDeleteAction = MessageDeleteAction;
+module.exports = MessageDeleteAction;

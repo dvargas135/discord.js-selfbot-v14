@@ -17,6 +17,7 @@
       "discord-api-types/v10",
       "node",
       "tsd",
+      "jest",
       "undici",
       "@sapphire/snowflake"
     ]

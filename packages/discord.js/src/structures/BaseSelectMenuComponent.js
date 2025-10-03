@@ -1,16 +1,14 @@
 'use strict';
 
-const { Component } = require('./Component.js');
+const Component = require('./Component');
 
 /**
  * Represents a select menu component
- *
  * @extends {Component}
  */
 class BaseSelectMenuComponent extends Component {
   /**
    * The placeholder for this select menu
-   *
    * @type {?string}
    * @readonly
    */
@@ -20,7 +18,6 @@ class BaseSelectMenuComponent extends Component {
 
   /**
    * The maximum amount of options that can be selected
-   *
    * @type {?number}
    * @readonly
    */
@@ -30,7 +27,6 @@ class BaseSelectMenuComponent extends Component {
 
   /**
    * The minimum amount of options that must be selected
-   *
    * @type {?number}
    * @readonly
    */
@@ -40,7 +36,6 @@ class BaseSelectMenuComponent extends Component {
 
   /**
    * The custom id of this select menu
-   *
    * @type {string}
    * @readonly
    */
@@ -50,7 +45,6 @@ class BaseSelectMenuComponent extends Component {
 
   /**
    * Whether this select menu is disabled
-   *
    * @type {boolean}
    * @readonly
    */
@@ -59,4 +53,4 @@ class BaseSelectMenuComponent extends Component {
   }
 }
 
-exports.BaseSelectMenuComponent = BaseSelectMenuComponent;
+module.exports = BaseSelectMenuComponent;

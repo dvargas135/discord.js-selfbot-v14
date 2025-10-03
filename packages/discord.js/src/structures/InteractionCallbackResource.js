@@ -2,7 +2,7 @@
 
 const { lazy } = require('@discordjs/util');
 
-const getMessage = lazy(() => require('./Message.js').Message);
+const getMessage = lazy(() => require('./Message').Message);
 
 /**
  * Represents the resource that was created by the interaction response.
@@ -11,7 +11,6 @@ class InteractionCallbackResource {
   constructor(client, data) {
     /**
      * The client that instantiated this
-     *
      * @name InteractionCallbackResource#client
      * @type {Client}
      * @readonly
@@ -20,21 +19,18 @@ class InteractionCallbackResource {
 
     /**
      * The interaction callback type
-     *
      * @type {InteractionResponseType}
      */
     this.type = data.type;
 
     /**
      * The Activity launched by an interaction
-     *
      * @typedef {Object} ActivityInstance
      * @property {string} id The instance id of the Activity
      */
 
     /**
      * Represents the Activity launched by this interaction
-     *
      * @type {?ActivityInstance}
      */
     this.activityInstance = data.activity_instance ?? null;
@@ -42,7 +38,6 @@ class InteractionCallbackResource {
     if ('message' in data) {
       /**
        * The message created by the interaction
-       *
        * @type {?Message}
        */
       this.message =
@@ -54,4 +49,4 @@ class InteractionCallbackResource {
   }
 }
 
-exports.InteractionCallbackResource = InteractionCallbackResource;
+module.exports = InteractionCallbackResource;

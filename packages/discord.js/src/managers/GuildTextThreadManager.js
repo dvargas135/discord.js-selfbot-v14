@@ -1,31 +1,28 @@
 'use strict';
 
 const { ChannelType, Routes } = require('discord-api-types/v10');
-const { DiscordjsTypeError, ErrorCodes } = require('../errors/index.js');
-const { ThreadManager } = require('./ThreadManager.js');
+const ThreadManager = require('./ThreadManager');
+const { DiscordjsTypeError, ErrorCodes } = require('../errors');
 
 /**
  * Manages API methods for {@link ThreadChannel} objects and stores their cache.
- *
  * @extends {ThreadManager}
  */
 class GuildTextThreadManager extends ThreadManager {
   /**
    * The channel this Manager belongs to
-   *
    * @name GuildTextThreadManager#channel
-   * @type {TextChannel|AnnouncementChannel}
+   * @type {TextChannel|NewsChannel}
    */
 
   /**
    * Options for creating a thread. <warn>Only one of `startMessage` or `type` can be defined.</warn>
-   *
    * @typedef {StartThreadOptions} GuildTextThreadCreateOptions
    * @property {MessageResolvable} [startMessage] The message to start a thread from.
    * <warn>If this is defined, then the `type` of thread gets inferred automatically and cannot be changed.</warn>
    * @property {ThreadChannelTypes} [type] The type of thread to create.
    * Defaults to {@link ChannelType.PublicThread} if created in a {@link TextChannel}
-   * <warn>When creating threads in a {@link AnnouncementChannel}, this is ignored and is always
+   * <warn>When creating threads in a {@link NewsChannel}, this is ignored and is always
    * {@link ChannelType.AnnouncementThread}</warn>
    * @property {boolean} [invitable] Whether non-moderators can add other non-moderators to the thread
    * <info>Can only be set when type will be {@link ChannelType.PrivateThread}</info>
@@ -33,7 +30,6 @@ class GuildTextThreadManager extends ThreadManager {
 
   /**
    * Creates a new thread in the channel.
-   *
    * @param {GuildTextThreadCreateOptions} [options] Options to create a new thread
    * @returns {Promise<ThreadChannel>}
    * @example
@@ -92,4 +88,4 @@ class GuildTextThreadManager extends ThreadManager {
   }
 }
 
-exports.GuildTextThreadManager = GuildTextThreadManager;
+module.exports = GuildTextThreadManager;

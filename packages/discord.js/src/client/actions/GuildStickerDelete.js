@@ -1,14 +1,13 @@
 'use strict';
 
-const { Events } = require('../../util/Events.js');
-const { Action } = require('./Action.js');
+const Action = require('./Action');
+const Events = require('../../util/Events');
 
 class GuildStickerDeleteAction extends Action {
   handle(sticker) {
     sticker.guild.stickers.cache.delete(sticker.id);
     /**
      * Emitted whenever a custom sticker is deleted in a guild.
-     *
      * @event Client#stickerDelete
      * @param {Sticker} sticker The sticker that was deleted
      */
@@ -17,4 +16,4 @@ class GuildStickerDeleteAction extends Action {
   }
 }
 
-exports.GuildStickerDeleteAction = GuildStickerDeleteAction;
+module.exports = GuildStickerDeleteAction;

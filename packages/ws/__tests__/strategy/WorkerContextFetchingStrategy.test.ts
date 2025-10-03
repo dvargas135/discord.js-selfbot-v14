@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 // @ts-nocheck
+import { REST } from '@discordjs/rest';
+import { MockAgent, type Interceptable } from 'undici';
 import { beforeEach, test, vi, expect } from 'vitest';
 import {
 	managerToFetchingStrategyOptions,
@@ -10,7 +12,15 @@ import {
 	type WorkerReceivePayload,
 	type WorkerSendPayload,
 } from '../../src/index.js';
-import { mockGatewayInformation } from '../gateway.mock.js';
+
+let mockAgent: MockAgent;
+let mockPool: Interceptable;
+
+beforeEach(() => {
+	mockAgent = new MockAgent();
+	mockAgent.disableNetConnect();
+	mockPool = mockAgent.get('https://discord.com');
+});
 
 const session = {
 	shardId: 0,
@@ -42,13 +52,32 @@ vi.mock('node:worker_threads', async () => {
 });
 
 test('session info', async () => {
-	const manager = new WebSocketManager({
-		token: 'A-Very-Fake-Token',
-		intents: 0,
-		async fetchGatewayInformation() {
-			return mockGatewayInformation;
-		},
-	});
+	const rest = new REST().setAgent(mockAgent).setToken('A-Very-Fake-Token');
+	const manager = new WebSocketManager({ token: 'A-Very-Fake-Token', intents: 0, rest });
+
+	mockPool
+		.intercept({
+			path: '/api/v10/gateway/bot',
+			method: 'GET',
+		})
+		.reply(() => ({
+			data: {
+				shards: 1,
+				session_start_limit: {
+					max_concurrency: 3,
+					reset_after: 60,
+					remaining: 3,
+					total: 3,
+				},
+				url: 'wss://gateway.discord.gg',
+			},
+			statusCode: 200,
+			responseOptions: {
+				headers: {
+					'content-type': 'application/json',
+				},
+			},
+		}));
 
 	const strategy = new WorkerContextFetchingStrategy(await managerToFetchingStrategyOptions(manager));
 

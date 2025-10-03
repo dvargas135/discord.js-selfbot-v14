@@ -26,11 +26,10 @@ export class PollAPI {
 		channelId: Snowflake,
 		messageId: Snowflake,
 		answerId: number,
-		query: RESTGetAPIPollAnswerVotersQuery = {},
-		{ auth, signal }: Pick<RequestData, 'auth' | 'signal'> = {},
+		query: RESTGetAPIPollAnswerVotersQuery,
+		{ signal }: Pick<RequestData, 'signal'> = {},
 	) {
 		return this.rest.get(Routes.pollAnswerVoters(channelId, messageId, answerId), {
-			auth,
 			signal,
 			query: makeURLSearchParams(query),
 		}) as Promise<RESTGetAPIPollAnswerVotersResult>;
@@ -44,13 +43,8 @@ export class PollAPI {
 	 * @param messageId - The id of the message containing the poll
 	 * @param options - The options for expiring the poll
 	 */
-	public async expirePoll(
-		channelId: Snowflake,
-		messageId: Snowflake,
-		{ auth, signal }: Pick<RequestData, 'auth' | 'signal'> = {},
-	) {
+	public async expirePoll(channelId: Snowflake, messageId: Snowflake, { signal }: Pick<RequestData, 'signal'> = {}) {
 		return this.rest.post(Routes.expirePoll(channelId, messageId), {
-			auth,
 			signal,
 		}) as Promise<RESTPostAPIPollExpireResult>;
 	}

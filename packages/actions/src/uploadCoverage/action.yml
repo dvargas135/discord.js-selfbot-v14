@@ -7,6 +7,24 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Upload Guide Coverage
+      if: ${{ hashFiles('apps/guide/coverage/cobertura-coverage.xml') != '' }}
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./apps/guide/coverage/cobertura-coverage.xml
+        disable_search: true
+        flags: guide
+        token: ${{ inputs.CODECOV_TOKEN }}
+
+    - name: Upload Website Coverage
+      if: ${{ hashFiles('apps/website/coverage/cobertura-coverage.xml') != '' }}
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./apps/website/coverage/cobertura-coverage.xml
+        disable_search: true
+        flags: website
+        token: ${{ inputs.CODECOV_TOKEN }}
+
     - name: Upload Brokers Coverage
       if: ${{ hashFiles('packages/brokers/coverage/cobertura-coverage.xml') != '' }}
       uses: codecov/codecov-action@v4
@@ -32,15 +50,6 @@ runs:
         files: ./packages/collection/coverage/cobertura-coverage.xml
         disable_search: true
         flags: collection
-        token: ${{ inputs.CODECOV_TOKEN }}
-
-    - name: Upload Core Coverage
-      if: ${{ hashFiles('packages/core/coverage/cobertura-coverage.xml') != '' }}
-      uses: codecov/codecov-action@v4
-      with:
-        files: ./packages/core/coverage/cobertura-coverage.xml
-        disable_search: true
-        flags: core
         token: ${{ inputs.CODECOV_TOKEN }}
 
     - name: Upload Discord.js Coverage
@@ -88,24 +97,6 @@ runs:
         flags: rest
         token: ${{ inputs.CODECOV_TOKEN }}
 
-    - name: Upload Structures Coverage
-      if: ${{ hashFiles('packages/structures/coverage/cobertura-coverage.xml') != '' }}
-      uses: codecov/codecov-action@v4
-      with:
-        files: ./packages/structures/coverage/cobertura-coverage.xml
-        disable_search: true
-        flags: structures
-        token: ${{ inputs.CODECOV_TOKEN }}
-
-    - name: Upload Util Coverage
-      if: ${{ hashFiles('packages/util/coverage/cobertura-coverage.xml') != '' }}
-      uses: codecov/codecov-action@v4
-      with:
-        files: ./packages/util/coverage/cobertura-coverage.xml
-        disable_search: true
-        flags: util
-        token: ${{ inputs.CODECOV_TOKEN }}
-
     - name: Upload Voice Coverage
       if: ${{ hashFiles('packages/voice/coverage/cobertura-coverage.xml') != '' }}
       uses: codecov/codecov-action@v4
@@ -124,11 +115,20 @@ runs:
         flags: ws
         token: ${{ inputs.CODECOV_TOKEN }}
 
-    - name: Upload Utilities Coverage
-      if: ${{ hashFiles('packages/actions/coverage/cobertura-coverage.xml') != '' }}
+    - name: Upload Util Coverage
+      if: ${{ hashFiles('packages/util/coverage/cobertura-coverage.xml') != '' }}
       uses: codecov/codecov-action@v4
       with:
-        files: ./packages/actions/coverage/cobertura-coverage.xml
+        files: ./packages/util/coverage/cobertura-coverage.xml
+        disable_search: true
+        flags: util
+        token: ${{ inputs.CODECOV_TOKEN }}
+
+    - name: Upload Utilities Coverage
+      if: ${{ hashFiles('packages/actions/coverage/cobertura-coverage.xml') != '' || hashFiles('packages/scripts/coverage/cobertura-coverage.xml') != '' }}
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./packages/actions/coverage/cobertura-coverage.xml, ./packages/scripts/coverage/cobertura-coverage.xml
         disable_search: true
         flags: utilities
         token: ${{ inputs.CODECOV_TOKEN }}

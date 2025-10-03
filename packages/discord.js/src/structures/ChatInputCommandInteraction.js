@@ -1,12 +1,11 @@
 'use strict';
 
-const { transformResolved } = require('../util/Util.js');
-const { CommandInteraction } = require('./CommandInteraction.js');
-const { CommandInteractionOptionResolver } = require('./CommandInteractionOptionResolver.js');
+const CommandInteraction = require('./CommandInteraction');
+const CommandInteractionOptionResolver = require('./CommandInteractionOptionResolver');
+const { transformResolved } = require('../util/Util');
 
 /**
  * Represents a command interaction.
- *
  * @extends {CommandInteraction}
  */
 class ChatInputCommandInteraction extends CommandInteraction {
@@ -15,7 +14,6 @@ class ChatInputCommandInteraction extends CommandInteraction {
 
     /**
      * The options passed to the command.
-     *
      * @type {CommandInteractionOptionResolver}
      */
     this.options = new CommandInteractionOptionResolver(
@@ -28,7 +26,6 @@ class ChatInputCommandInteraction extends CommandInteraction {
   /**
    * Returns a string representation of the command interaction.
    * This can then be copied by a user and executed again in a new command while keeping the option order.
-   *
    * @returns {string}
    */
   toString() {
@@ -42,4 +39,4 @@ class ChatInputCommandInteraction extends CommandInteraction {
   }
 }
 
-exports.ChatInputCommandInteraction = ChatInputCommandInteraction;
+module.exports = ChatInputCommandInteraction;

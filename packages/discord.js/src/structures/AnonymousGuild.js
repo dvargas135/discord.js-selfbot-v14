@@ -1,10 +1,9 @@
 'use strict';
 
-const { BaseGuild } = require('./BaseGuild.js');
+const BaseGuild = require('./BaseGuild');
 
 /**
  * Bundles common attributes and methods between {@link Guild} and {@link InviteGuild}
- *
  * @extends {BaseGuild}
  * @abstract
  */
@@ -20,7 +19,6 @@ class AnonymousGuild extends BaseGuild {
     if ('splash' in data) {
       /**
        * The hash of the guild invite splash image
-       *
        * @type {?string}
        */
       this.splash = data.splash;
@@ -29,7 +27,6 @@ class AnonymousGuild extends BaseGuild {
     if ('banner' in data) {
       /**
        * The hash of the guild banner
-       *
        * @type {?string}
        */
       this.banner = data.banner;
@@ -38,7 +35,6 @@ class AnonymousGuild extends BaseGuild {
     if ('description' in data) {
       /**
        * The description of the guild, if any
-       *
        * @type {?string}
        */
       this.description = data.description;
@@ -47,7 +43,6 @@ class AnonymousGuild extends BaseGuild {
     if ('verification_level' in data) {
       /**
        * The verification level of the guild
-       *
        * @type {GuildVerificationLevel}
        */
       this.verificationLevel = data.verification_level;
@@ -56,7 +51,6 @@ class AnonymousGuild extends BaseGuild {
     if ('vanity_url_code' in data) {
       /**
        * The vanity invite code of the guild, if any
-       *
        * @type {?string}
        */
       this.vanityURLCode = data.vanity_url_code;
@@ -65,7 +59,6 @@ class AnonymousGuild extends BaseGuild {
     if ('nsfw_level' in data) {
       /**
        * The NSFW level of this guild
-       *
        * @type {GuildNSFWLevel}
        */
       this.nsfwLevel = data.nsfw_level;
@@ -74,7 +67,6 @@ class AnonymousGuild extends BaseGuild {
     if ('premium_subscription_count' in data) {
       /**
        * The total number of boosts for this server
-       *
        * @type {?number}
        */
       this.premiumSubscriptionCount = data.premium_subscription_count;
@@ -85,7 +77,6 @@ class AnonymousGuild extends BaseGuild {
 
   /**
    * The URL to this guild's banner.
-   *
    * @param {ImageURLOptions} [options={}] Options for the image URL
    * @returns {?string}
    */
@@ -95,7 +86,6 @@ class AnonymousGuild extends BaseGuild {
 
   /**
    * The URL to this guild's invite splash image.
-   *
    * @param {ImageURLOptions} [options={}] Options for the image URL
    * @returns {?string}
    */
@@ -104,4 +94,4 @@ class AnonymousGuild extends BaseGuild {
   }
 }
 
-exports.AnonymousGuild = AnonymousGuild;
+module.exports = AnonymousGuild;

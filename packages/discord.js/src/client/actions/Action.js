@@ -1,8 +1,6 @@
 'use strict';
 
-const { Poll } = require('../../structures/Poll.js');
-const { PollAnswer } = require('../../structures/PollAnswer.js');
-const { Partials } = require('../../util/Partials.js');
+const Partials = require('../../util/Partials');
 
 /*
 
@@ -16,7 +14,7 @@ that WebSocket events don't clash with REST methods.
 
 */
 
-class Action {
+class GenericAction {
   constructor(client) {
     this.client = client;
   }
@@ -65,23 +63,6 @@ class Action {
     );
   }
 
-  getPoll(data, message, channel) {
-    const includePollPartial = this.client.options.partials.includes(Partials.Poll);
-    const includePollAnswerPartial = this.client.options.partials.includes(Partials.PollAnswer);
-    if (message.partial && (!includePollPartial || !includePollAnswerPartial)) return null;
-
-    if (!message.poll && includePollPartial) {
-      message.poll = new Poll(this.client, data, message, channel);
-    }
-
-    if (message.poll && !message.poll.answers.has(data.answer_id) && includePollAnswerPartial) {
-      const pollAnswer = new PollAnswer(this.client, data, message.poll);
-      message.poll.answers.set(data.answer_id, pollAnswer);
-    }
-
-    return message.poll;
-  }
-
   getReaction(data, message, user) {
     const id = data.emoji.id ?? decodeURIComponent(data.emoji.name);
     return this.getPayload(
@@ -114,7 +95,6 @@ class Action {
         return this.client.users._add(data.member.user);
       }
     }
-
     return this.getUser(data);
   }
 
@@ -141,4 +121,4 @@ class Action {
   }
 }
 
-exports.Action = Action;
+module.exports = GenericAction;

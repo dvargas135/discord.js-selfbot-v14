@@ -1,11 +1,10 @@
 'use strict';
 
 const { Collection } = require('@discordjs/collection');
-const { MessageComponentInteraction } = require('./MessageComponentInteraction.js');
+const MessageComponentInteraction = require('./MessageComponentInteraction');
 
 /**
  * Represents a {@link ComponentType.RoleSelect} select menu interaction.
- *
  * @extends {MessageComponentInteraction}
  */
 class RoleSelectMenuInteraction extends MessageComponentInteraction {
@@ -15,14 +14,12 @@ class RoleSelectMenuInteraction extends MessageComponentInteraction {
 
     /**
      * An array of the selected role ids
-     *
      * @type {Snowflake[]}
      */
     this.values = values ?? [];
 
     /**
      * Collection of the selected roles
-     *
      * @type {Collection<Snowflake, Role|APIRole>}
      */
     this.roles = new Collection();
@@ -33,4 +30,4 @@ class RoleSelectMenuInteraction extends MessageComponentInteraction {
   }
 }
 
-exports.RoleSelectMenuInteraction = RoleSelectMenuInteraction;
+module.exports = RoleSelectMenuInteraction;

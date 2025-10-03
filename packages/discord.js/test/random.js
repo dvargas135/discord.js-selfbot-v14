@@ -3,7 +3,7 @@
 'use strict';
 
 const { token, owner } = require('./auth.js');
-const { Client, Events } = require('../src/index.js');
+const { Client } = require('../src');
 const { ChannelType, GatewayIntentBits } = require('discord-api-types/v10');
 
 console.time('magic');
@@ -24,18 +24,18 @@ client
   .catch(console.error);
 
 // Fetch all members in a new guild
-client.on(Events.GuildCreate, guild =>
+client.on('guildCreate', guild =>
   guild.members.fetch().catch(err => console.log(`Failed to fetch all members: ${err}\n${err.stack}`)),
 );
 
 // Fetch all members in a newly available guild
-client.on(Events.GuildUpdate, (oldGuild, newGuild) =>
+client.on('guildUpdate', (oldGuild, newGuild) =>
   !oldGuild.available && newGuild.available
     ? newGuild.members.fetch().catch(err => console.log(`Failed to fetch all members: ${err}\n${err.stack}`))
     : Promise.resolve(),
 );
 
-client.on(Events.ClientReady, async () => {
+client.on('ready', async () => {
   // Fetch all members for initially available guilds
   try {
     const promises = client.guilds.cache.map(guild => (guild.available ? guild.members.fetch() : Promise.resolve()));
@@ -48,11 +48,12 @@ client.on(Events.ClientReady, async () => {
   console.timeEnd('magic');
 });
 
-client.on(Events.Debug, console.log);
+client.on('debug', console.log);
 
-client.on(Events.Error, m => console.log('debug', new Error(m).stack));
+client.on('error', m => console.log('debug', new Error(m).stack));
+client.on('reconnecting', m => console.log('reconnecting', m));
 
-client.on(Events.MessageCreate, message => {
+client.on('messageCreate', message => {
   if (true) {
     if (message.content === 'makechann') {
       if (message.channel.guild) {
@@ -139,13 +140,12 @@ client.on(Events.MessageCreate, message => {
     }
 
     if (message.content.startsWith('kick')) {
-      const user = message.mentions.users.first();
       message.guild.members
-        .resolve(user)
+        .resolve(message.mentions.users.first())
         .kick()
-        .then(() => {
-          console.log(user.id);
-          message.channel.send(`Kicked ${user.username}!`);
+        .then(member => {
+          console.log(member);
+          message.channel.send(`Kicked!${member.user.username}`);
         })
         .catch(console.error);
     }
@@ -182,7 +182,7 @@ function chanLoop(channel) {
   channel.setName(`${channel.name}a`).then(chanLoop).catch(console.error);
 }
 
-client.on(Events.MessageCreate, msg => {
+client.on('messageCreate', msg => {
   if (msg.content.startsWith('?raw')) {
     msg.channel.send(`\`\`\`${msg.content}\`\`\``);
   }
@@ -197,17 +197,17 @@ client.on(Events.MessageCreate, msg => {
   }
 });
 
-client.on(Events.MessageReactionAdd, (reaction, user) => {
+client.on('messageReactionAdd', (reaction, user) => {
   if (reaction.message.channelId !== '222086648706498562') return;
   reaction.message.channel.send(`${user.username} added reaction ${reaction.emoji}, count is now ${reaction.count}`);
 });
 
-client.on(Events.MessageReactionRemove, (reaction, user) => {
+client.on('messageReactionRemove', (reaction, user) => {
   if (reaction.message.channelId !== '222086648706498562') return;
   reaction.message.channel.send(`${user.username} removed reaction ${reaction.emoji}, count is now ${reaction.count}`);
 });
 
-client.on(Events.MessageCreate, m => {
+client.on('messageCreate', m => {
   if (m.content.startsWith('#reactions')) {
     const mId = m.content.split(' ')[1];
     m.channel.messages.fetch(mId).then(rM => {

@@ -2,7 +2,6 @@
 // See LICENSE in the project root for license information.
 
 import * as os from 'node:os';
-import process from 'node:process';
 import { InternalError } from '@rushstack/node-core-library';
 import { CommandLineParser, type CommandLineFlagParameter } from '@rushstack/ts-command-line';
 import colors from 'colors';
@@ -31,22 +30,23 @@ export class ApiExtractorCommandLine extends CommandLineParser {
 		});
 	}
 
-	protected override async onExecuteAsync(): Promise<void> {
+	protected override async onExecute(): Promise<void> {
 		// override
 		if (this._debugParameter.value) {
 			InternalError.breakInDebugger = true;
 		}
 
-		process.exitCode = 1;
 		try {
-			await super.onExecuteAsync();
-			process.exitCode = 0;
+			await super.onExecute();
 		} catch (error: any) {
 			if (this._debugParameter.value) {
 				console.error(os.EOL + error.stack);
 			} else {
 				console.error(os.EOL + colors.red('ERROR: ' + error.message.trim()));
 			}
+
+			// eslint-disable-next-line no-restricted-globals
+			process.exitCode = 1;
 		}
 	}
 

@@ -1,13 +1,11 @@
-/* eslint-disable id-length */
 'use strict';
 
 const { GatewayOpcodes, ActivityType } = require('discord-api-types/v10');
-const { DiscordjsTypeError, ErrorCodes } = require('../errors/index.js');
-const { Presence } = require('./Presence.js');
+const { Presence } = require('./Presence');
+const { DiscordjsTypeError, ErrorCodes } = require('../errors');
 
 /**
  * Represents the client's presence.
- *
  * @extends {Presence}
  */
 class ClientPresence extends Presence {
@@ -17,29 +15,26 @@ class ClientPresence extends Presence {
 
   /**
    * Sets the client's presence
-   *
    * @param {PresenceData} presence The data to set the presence to
-   * @returns {Promise<ClientPresence>}
+   * @returns {ClientPresence}
    */
-  async set(presence) {
+  set(presence) {
     const packet = this._parse(presence);
     this._patch(packet);
     if (presence.shardId === undefined) {
-      await this.client._broadcast({ op: GatewayOpcodes.PresenceUpdate, d: packet });
+      this.client.ws.broadcast({ op: GatewayOpcodes.PresenceUpdate, d: packet });
     } else if (Array.isArray(presence.shardId)) {
-      await Promise.all(
-        presence.shardId.map(shardId => this.client.ws.send(shardId, { op: GatewayOpcodes.PresenceUpdate, d: packet })),
-      );
+      for (const shardId of presence.shardId) {
+        this.client.ws.shards.get(shardId).send({ op: GatewayOpcodes.PresenceUpdate, d: packet });
+      }
     } else {
-      await this.client.ws.send(presence.shardId, { op: GatewayOpcodes.PresenceUpdate, d: packet });
+      this.client.ws.shards.get(presence.shardId).send({ op: GatewayOpcodes.PresenceUpdate, d: packet });
     }
-
     return this;
   }
 
   /**
    * Parses presence data into a packet ready to be sent to Discord
-   *
    * @param {PresenceData} presence The data to parse
    * @returns {GatewayPresenceUpdateData}
    * @private
@@ -86,4 +81,4 @@ class ClientPresence extends Presence {
   }
 }
 
-exports.ClientPresence = ClientPresence;
+module.exports = ClientPresence;

@@ -36,14 +36,14 @@ jobs:
     if: github.repository_owner == 'discordjs'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref || '' }}
 
-      - name: Install Node.js v22
+      - name: Install Node.js v20
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
 
       - name: Install dependencies
         uses: ./packages/actions/src/pnpmCache
@@ -53,18 +53,15 @@ jobs:
 
       - name: Checkout main repository
         if: ${{ inputs.ref && inputs.ref != 'main' }}
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           path: 'main'
 
       - name: Build main
         if: ${{ inputs.ref && inputs.ref != 'main' }}
         shell: bash
-        env:
-          COREPACK_ENABLE_STRICT: 0
         run: |
           cd main
-          pnpm self-update 10
           pnpm install --frozen-lockfile --prefer-offline --loglevel error
           pnpm run build
           cd ..
@@ -86,7 +83,7 @@ jobs:
       - name: Build docs with main api-extractor
         if: ${{ inputs.ref && inputs.ref != 'main' }}
         run: |
-          declare -a PACKAGES=("brokers" "builders" "collection" "core" "discord.js" "formatters" "next" "proxy" "rest" "structures" "util" "voice" "ws")
+          declare -a PACKAGES=("brokers" "builders" "collection" "core" "discord.js" "formatters" "next" "proxy" "rest" "util" "voice" "ws")
           for PACKAGE in "${PACKAGES[@]}"; do
             cd "packages/${PACKAGE}"
             sed -i 's!https://github.com/discordjs/discord.js/tree/main!https://github.com/discordjs/discord.js/tree/${{ inputs.ref }}!' api-extractor.json
@@ -96,7 +93,7 @@ jobs:
           done
 
       - name: Checkout docs repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           repository: 'discordjs/docs'
           token: ${{ secrets.DJS_DOCS }}
@@ -105,9 +102,11 @@ jobs:
       - name: Upload documentation to database
         if: ${{ env.REF_TYPE == 'tag' && (!inputs.ref || inputs.ref == 'main') }}
         env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           CF_D1_DOCS_API_KEY: ${{ secrets.CF_D1_DOCS_API_KEY }}
           CF_D1_DOCS_ID: ${{ secrets.CF_D1_DOCS_ID }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
           CF_R2_DOCS_URL: ${{ secrets.CF_R2_DOCS_URL }}
           CF_R2_DOCS_ACCESS_KEY_ID: ${{ secrets.CF_R2_DOCS_ACCESS_KEY_ID }}
           CF_R2_DOCS_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_DOCS_SECRET_ACCESS_KEY }}
@@ -121,9 +120,11 @@ jobs:
       - name: Upload documentation to database
         if: ${{ env.REF_TYPE == 'tag' && inputs.ref && inputs.ref != 'main' }}
         env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           CF_D1_DOCS_API_KEY: ${{ secrets.CF_D1_DOCS_API_KEY }}
           CF_D1_DOCS_ID: ${{ secrets.CF_D1_DOCS_ID }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
           CF_R2_DOCS_URL: ${{ secrets.CF_R2_DOCS_URL }}
           CF_R2_DOCS_ACCESS_KEY_ID: ${{ secrets.CF_R2_DOCS_ACCESS_KEY_ID }}
           CF_R2_DOCS_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_DOCS_SECRET_ACCESS_KEY }}
@@ -137,6 +138,7 @@ jobs:
       - name: Upload split documentation to blob storage
         if: ${{ env.REF_TYPE == 'tag' && (!inputs.ref || inputs.ref == 'main') }}
         env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
           CF_R2_DOCS_URL: ${{ secrets.CF_R2_DOCS_URL }}
           CF_R2_DOCS_ACCESS_KEY_ID: ${{ secrets.CF_R2_DOCS_ACCESS_KEY_ID }}
           CF_R2_DOCS_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_DOCS_SECRET_ACCESS_KEY }}
@@ -149,6 +151,7 @@ jobs:
       - name: Upload split documentation to blob storage
         if: ${{ env.REF_TYPE == 'tag' && inputs.ref && inputs.ref != 'main' }}
         env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
           CF_R2_DOCS_URL: ${{ secrets.CF_R2_DOCS_URL }}
           CF_R2_DOCS_ACCESS_KEY_ID: ${{ secrets.CF_R2_DOCS_ACCESS_KEY_ID }}
           CF_R2_DOCS_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_DOCS_SECRET_ACCESS_KEY }}
@@ -175,9 +178,11 @@ jobs:
       - name: Upload documentation to database
         if: ${{ env.REF_TYPE == 'branch' && (!inputs.ref || inputs.ref == 'main') }}
         env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           CF_D1_DOCS_API_KEY: ${{ secrets.CF_D1_DOCS_API_KEY }}
           CF_D1_DOCS_ID: ${{ secrets.CF_D1_DOCS_ID }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
           CF_R2_DOCS_URL: ${{ secrets.CF_R2_DOCS_URL }}
           CF_R2_DOCS_ACCESS_KEY_ID: ${{ secrets.CF_R2_DOCS_ACCESS_KEY_ID }}
           CF_R2_DOCS_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_DOCS_SECRET_ACCESS_KEY }}
@@ -188,9 +193,11 @@ jobs:
       - name: Upload documentation to database
         if: ${{ env.REF_TYPE == 'branch' && inputs.ref && inputs.ref != 'main' }}
         env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           CF_D1_DOCS_API_KEY: ${{ secrets.CF_D1_DOCS_API_KEY }}
           CF_D1_DOCS_ID: ${{ secrets.CF_D1_DOCS_ID }}
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
           CF_R2_DOCS_URL: ${{ secrets.CF_R2_DOCS_URL }}
           CF_R2_DOCS_ACCESS_KEY_ID: ${{ secrets.CF_R2_DOCS_ACCESS_KEY_ID }}
           CF_R2_DOCS_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_DOCS_SECRET_ACCESS_KEY }}
@@ -201,6 +208,7 @@ jobs:
       - name: Upload split documentation to blob storage
         if: ${{ env.REF_TYPE == 'branch' && (!inputs.ref || inputs.ref == 'main') }}
         env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
           CF_R2_DOCS_URL: ${{ secrets.CF_R2_DOCS_URL }}
           CF_R2_DOCS_ACCESS_KEY_ID: ${{ secrets.CF_R2_DOCS_ACCESS_KEY_ID }}
           CF_R2_DOCS_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_DOCS_SECRET_ACCESS_KEY }}
@@ -210,6 +218,7 @@ jobs:
       - name: Upload split documentation to blob storage
         if: ${{ env.REF_TYPE == 'branch' && inputs.ref && inputs.ref != 'main' }}
         env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
           CF_R2_DOCS_URL: ${{ secrets.CF_R2_DOCS_URL }}
           CF_R2_DOCS_ACCESS_KEY_ID: ${{ secrets.CF_R2_DOCS_ACCESS_KEY_ID }}
           CF_R2_DOCS_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_DOCS_SECRET_ACCESS_KEY }}
@@ -219,7 +228,7 @@ jobs:
       - name: Move docs to correct directory
         if: ${{ env.REF_TYPE == 'branch' }}
         run: |
-          declare -a PACKAGES=("brokers" "builders" "collection" "core" "discord.js" "formatters" "next" "proxy" "rest" "structures" "util" "voice" "ws")
+          declare -a PACKAGES=("brokers" "builders" "collection" "core" "discord.js" "formatters" "next" "proxy" "rest" "util" "voice" "ws")
           for PACKAGE in "${PACKAGES[@]}"; do
             if [[ "${PACKAGE}" == "discord.js" ]]; then
               mkdir -p "out/${PACKAGE}"
@@ -250,12 +259,12 @@ jobs:
     if: github.repository_owner == 'discordjs'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
-      - name: Install Node.js v22
+      - name: Install Node.js v20
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
 
       - name: Install dependencies
         uses: ./packages/actions/src/pnpmCache

@@ -1,16 +1,14 @@
 'use strict';
 
-const { Component } = require('./Component.js');
+const Component = require('./Component');
 
 /**
  * Represents a button component
- *
  * @extends {Component}
  */
 class ButtonComponent extends Component {
   /**
    * The style of this button
-   *
    * @type {ButtonStyle}
    * @readonly
    */
@@ -20,7 +18,6 @@ class ButtonComponent extends Component {
 
   /**
    * The label of this button
-   *
    * @type {?string}
    * @readonly
    */
@@ -30,7 +27,6 @@ class ButtonComponent extends Component {
 
   /**
    * The emoji used in this button
-   *
    * @type {?APIMessageComponentEmoji}
    * @readonly
    */
@@ -40,7 +36,6 @@ class ButtonComponent extends Component {
 
   /**
    * Whether this button is disabled
-   *
    * @type {boolean}
    * @readonly
    */
@@ -50,7 +45,6 @@ class ButtonComponent extends Component {
 
   /**
    * The custom id of this button (only defined on non-link buttons)
-   *
    * @type {?string}
    * @readonly
    */
@@ -60,7 +54,6 @@ class ButtonComponent extends Component {
 
   /**
    * The URL of this button (only defined on link buttons)
-   *
    * @type {?string}
    * @readonly
    */
@@ -69,4 +62,4 @@ class ButtonComponent extends Component {
   }
 }
 
-exports.ButtonComponent = ButtonComponent;
+module.exports = ButtonComponent;

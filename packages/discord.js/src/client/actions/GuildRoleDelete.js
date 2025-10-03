@@ -1,7 +1,7 @@
 'use strict';
 
-const { Events } = require('../../util/Events.js');
-const { Action } = require('./Action.js');
+const Action = require('./Action');
+const Events = require('../../util/Events');
 
 class GuildRoleDeleteAction extends Action {
   handle(data) {
@@ -15,7 +15,6 @@ class GuildRoleDeleteAction extends Action {
         guild.roles.cache.delete(data.role_id);
         /**
          * Emitted whenever a guild role is deleted.
-         *
          * @event Client#roleDelete
          * @param {Role} role The role that was deleted
          */
@@ -27,4 +26,4 @@ class GuildRoleDeleteAction extends Action {
   }
 }
 
-exports.GuildRoleDeleteAction = GuildRoleDeleteAction;
+module.exports = GuildRoleDeleteAction;

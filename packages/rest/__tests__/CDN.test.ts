@@ -8,7 +8,7 @@ const hash = 'abcdef';
 const animatedHash = 'a_bcdef';
 const defaultAvatar = 1_234 % 5;
 
-const cdn = new CDN({ cdn: baseCDN, mediaProxy: baseMedia });
+const cdn = new CDN(baseCDN, baseMedia);
 
 test('appAsset default', () => {
 	expect(cdn.appAsset(id, hash)).toEqual(`${baseCDN}/app-assets/${id}/${hash}.webp`);
@@ -23,11 +23,15 @@ test('avatar default', () => {
 });
 
 test('avatar dynamic-animated', () => {
-	expect(cdn.avatar(id, animatedHash)).toEqual(`${baseCDN}/avatars/${id}/${animatedHash}.webp?animated=true`);
+	expect(cdn.avatar(id, animatedHash)).toEqual(`${baseCDN}/avatars/${id}/${animatedHash}.gif`);
 });
 
 test('avatar dynamic-not-animated', () => {
 	expect(cdn.avatar(id, hash)).toEqual(`${baseCDN}/avatars/${id}/${hash}.webp`);
+});
+
+test('avatar decoration default', () => {
+	expect(cdn.avatarDecoration(id, hash)).toEqual(`${baseCDN}/avatar-decorations/${id}/${hash}.webp`);
 });
 
 test('avatar decoration preset', () => {
@@ -54,6 +58,10 @@ test('emoji', () => {
 	expect(cdn.emoji(id)).toEqual(`${baseCDN}/emojis/${id}.webp`);
 });
 
+test('emoji gif', () => {
+	expect(cdn.emoji(id, 'gif')).toEqual(`${baseCDN}/emojis/${id}.gif`);
+});
+
 test('emoji animated', () => {
 	expect(cdn.emoji(id, { animated: true })).toEqual(`${baseCDN}/emojis/${id}.webp?animated=true`);
 });
@@ -68,7 +76,7 @@ test('guildMemberAvatar default', () => {
 
 test('guildMemberAvatar dynamic-animated', () => {
 	expect(cdn.guildMemberAvatar(id, id, animatedHash)).toEqual(
-		`${baseCDN}/guilds/${id}/users/${id}/avatars/${animatedHash}.webp?animated=true`,
+		`${baseCDN}/guilds/${id}/users/${id}/avatars/${animatedHash}.gif`,
 	);
 });
 
@@ -82,7 +90,7 @@ test('guildMemberBanner default', () => {
 
 test('guildMemberBanner dynamic-animated', () => {
 	expect(cdn.guildMemberBanner(id, id, animatedHash)).toEqual(
-		`${baseCDN}/guilds/${id}/users/${id}/banners/${animatedHash}.webp?animated=true`,
+		`${baseCDN}/guilds/${id}/users/${id}/banners/${animatedHash}.gif`,
 	);
 });
 
@@ -99,7 +107,7 @@ test('icon default', () => {
 });
 
 test('icon dynamic-animated', () => {
-	expect(cdn.icon(id, animatedHash)).toEqual(`${baseCDN}/icons/${id}/${animatedHash}.webp?animated=true`);
+	expect(cdn.icon(id, animatedHash)).toEqual(`${baseCDN}/icons/${id}/${animatedHash}.gif`);
 });
 
 test('icon dynamic-not-animated', () => {
@@ -148,7 +156,5 @@ test('makeURL throws on invalid extension', () => {
 });
 
 test('makeURL valid size', () => {
-	expect(cdn.avatar(id, animatedHash, { size: 512 })).toEqual(
-		`${baseCDN}/avatars/${id}/${animatedHash}.webp?animated=true&size=512`,
-	);
+	expect(cdn.avatar(id, animatedHash, { size: 512 })).toEqual(`${baseCDN}/avatars/${id}/${animatedHash}.gif?size=512`);
 });

@@ -2,15 +2,14 @@
 
 const { lazy } = require('@discordjs/util');
 const { ApplicationCommandOptionType } = require('discord-api-types/v10');
-const { transformResolved } = require('../util/Util.js');
-const { CommandInteraction } = require('./CommandInteraction.js');
-const { CommandInteractionOptionResolver } = require('./CommandInteractionOptionResolver.js');
+const CommandInteraction = require('./CommandInteraction');
+const CommandInteractionOptionResolver = require('./CommandInteractionOptionResolver');
+const { transformResolved } = require('../util/Util');
 
-const getMessage = lazy(() => require('./Message.js').Message);
+const getMessage = lazy(() => require('./Message').Message);
 
 /**
  * Represents a context menu interaction.
- *
  * @extends {CommandInteraction}
  */
 class ContextMenuCommandInteraction extends CommandInteraction {
@@ -18,7 +17,6 @@ class ContextMenuCommandInteraction extends CommandInteraction {
     super(client, data);
     /**
      * The target of the interaction, parsed into options
-     *
      * @type {CommandInteractionOptionResolver}
      */
     this.options = new CommandInteractionOptionResolver(
@@ -29,7 +27,6 @@ class ContextMenuCommandInteraction extends CommandInteraction {
 
     /**
      * The id of the target of this interaction
-     *
      * @type {Snowflake}
      */
     this.targetId = data.data.target_id;
@@ -37,7 +34,6 @@ class ContextMenuCommandInteraction extends CommandInteraction {
 
   /**
    * Resolves and transforms options received from the API for a context menu interaction.
-   *
    * @param {APIApplicationCommandInteractionData} data The interaction data
    * @returns {CommandInteractionOption[]}
    * @private
@@ -66,4 +62,4 @@ class ContextMenuCommandInteraction extends CommandInteraction {
   }
 }
 
-exports.ContextMenuCommandInteraction = ContextMenuCommandInteraction;
+module.exports = ContextMenuCommandInteraction;

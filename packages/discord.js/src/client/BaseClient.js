@@ -1,21 +1,19 @@
 'use strict';
 
-const { REST, RESTEvents } = require('@discordjs/rest');
-const { AsyncEventEmitter } = require('@vladfrangu/async_event_emitter');
+const EventEmitter = require('node:events');
+const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v10');
-const { DiscordjsTypeError, ErrorCodes } = require('../errors/index.js');
-const { Events } = require('../util/Events.js');
-const { Options } = require('../util/Options.js');
-const { flatten } = require('../util/Util.js');
+const { DiscordjsTypeError, ErrorCodes } = require('../errors');
+const Options = require('../util/Options');
+const { flatten } = require('../util/Util');
 
 /**
  * The base class for all clients.
- *
- * @extends {AsyncEventEmitter}
+ * @extends {EventEmitter}
  */
-class BaseClient extends AsyncEventEmitter {
+class BaseClient extends EventEmitter {
   constructor(options = {}) {
-    super();
+    super({ captureRejections: true });
 
     if (typeof options !== 'object' || options === null) {
       throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'options', 'object', true);
@@ -24,7 +22,6 @@ class BaseClient extends AsyncEventEmitter {
     const defaultOptions = Options.createDefault();
     /**
      * The options the client was instantiated with
-     *
      * @type {ClientOptions}
      */
     this.options = {
@@ -53,17 +50,13 @@ class BaseClient extends AsyncEventEmitter {
 
     /**
      * The REST manager of the client
-     *
      * @type {REST}
      */
     this.rest = new REST(this.options.rest);
-
-    this.rest.on(RESTEvents.Debug, message => this.emit(Events.Debug, message));
   }
 
   /**
    * Destroys all assets used by the base client.
-   *
    * @returns {void}
    */
   destroy() {
@@ -73,7 +66,6 @@ class BaseClient extends AsyncEventEmitter {
 
   /**
    * Options used for deleting a webhook.
-   *
    * @typedef {Object} WebhookDeleteOptions
    * @property {string} [token] Token of the webhook
    * @property {string} [reason] The reason for deleting the webhook
@@ -81,7 +73,6 @@ class BaseClient extends AsyncEventEmitter {
 
   /**
    * Deletes a webhook.
-   *
    * @param {Snowflake} id The webhook's id
    * @param {WebhookDeleteOptions} [options] Options for deleting the webhook
    * @returns {Promise<void>}
@@ -92,7 +83,6 @@ class BaseClient extends AsyncEventEmitter {
 
   /**
    * Increments max listeners by one, if they are not zero.
-   *
    * @private
    */
   incrementMaxListeners() {
@@ -104,7 +94,6 @@ class BaseClient extends AsyncEventEmitter {
 
   /**
    * Decrements max listeners by one, if they are not zero.
-   *
    * @private
    */
   decrementMaxListeners() {
@@ -123,7 +112,7 @@ class BaseClient extends AsyncEventEmitter {
   }
 }
 
-exports.BaseClient = BaseClient;
+module.exports = BaseClient;
 
 /**
  * @external REST

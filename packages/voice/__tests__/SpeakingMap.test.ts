@@ -1,8 +1,7 @@
-import { describe, test, expect, vitest } from 'vitest';
 import { SpeakingMap } from '../src/receive/SpeakingMap';
 import { noop } from '../src/util/util';
 
-vitest.useFakeTimers();
+jest.useFakeTimers();
 
 describe('SpeakingMap', () => {
 	test('Emits start and end', () => {
@@ -18,17 +17,17 @@ describe('SpeakingMap', () => {
 		for (let index = 0; index < 10; index++) {
 			speaking.onPacket(userId);
 			setTimeout(noop, SpeakingMap.DELAY / 2);
-			vitest.advanceTimersToNextTimer();
+			jest.advanceTimersToNextTimer();
 
 			expect(starts).toEqual([userId]);
 			expect(ends).toEqual([]);
 		}
 
-		vitest.advanceTimersToNextTimer();
+		jest.advanceTimersToNextTimer();
 		expect(ends).toEqual([userId]);
 
 		speaking.onPacket(userId);
-		vitest.advanceTimersToNextTimer();
+		jest.advanceTimersToNextTimer();
 		expect(starts).toEqual([userId, userId]);
 	});
 });

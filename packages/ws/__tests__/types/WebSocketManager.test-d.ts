@@ -1,13 +1,15 @@
 import type { AsyncEventEmitter } from '@vladfrangu/async_event_emitter';
-import { expectTypeOf } from 'vitest';
+import { expectType, expectAssignable } from 'tsd';
 import type { ManagerShardEventsMap, WebSocketShardEventsMap, WebSocketManager } from '../../src/index.js';
 
 declare const manager: WebSocketManager;
 declare const eventMap: ManagerShardEventsMap;
 
 type AugmentedShardEventsMap = {
-	[K in keyof WebSocketShardEventsMap]: [...WebSocketShardEventsMap[K], shardId: number];
+	[K in keyof WebSocketShardEventsMap]: [
+		WebSocketShardEventsMap[K] extends [] ? { shardId: number } : WebSocketShardEventsMap[K][0] & { shardId: number },
+	];
 };
 
-expectTypeOf(eventMap).toEqualTypeOf<AugmentedShardEventsMap>();
-expectTypeOf(manager).toMatchTypeOf<AsyncEventEmitter<AugmentedShardEventsMap>>();
+expectType<AugmentedShardEventsMap>(eventMap);
+expectAssignable<AsyncEventEmitter<AugmentedShardEventsMap>>(manager);

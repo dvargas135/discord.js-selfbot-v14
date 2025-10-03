@@ -1,127 +1,75 @@
 import { Buffer } from 'node:buffer';
 
 interface Methods {
-	crypto_aead_xchacha20poly1305_ietf_decrypt(
-		cipherText: Buffer,
-		additionalData: Buffer,
-		nonce: Buffer,
-		key: ArrayBufferLike,
-	): Buffer;
-	crypto_aead_xchacha20poly1305_ietf_encrypt(
-		plaintext: Buffer,
-		additionalData: Buffer,
-		nonce: Buffer,
-		key: ArrayBufferLike,
-	): Buffer;
+	close(opusPacket: Buffer, nonce: Buffer, secretKey: Uint8Array): Buffer;
+	open(buffer: Buffer, nonce: Buffer, secretKey: Uint8Array): Buffer | null;
+	random(bytes: number, nonce: Buffer): Buffer;
 }
 
 const libs = {
 	'sodium-native': (sodium: any): Methods => ({
-		crypto_aead_xchacha20poly1305_ietf_decrypt: (
-			cipherText: Buffer,
-			additionalData: Buffer,
-			nonce: Buffer,
-			key: ArrayBufferLike,
-		) => {
-			const message = Buffer.alloc(cipherText.length - sodium.crypto_aead_xchacha20poly1305_ietf_ABYTES);
-			sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(message, null, cipherText, additionalData, nonce, key);
-			return message;
+		open: (buffer: Buffer, nonce: Buffer, secretKey: Uint8Array) => {
+			if (buffer) {
+				const output = Buffer.allocUnsafe(buffer.length - sodium.crypto_box_MACBYTES);
+				if (sodium.crypto_secretbox_open_easy(output, buffer, nonce, secretKey)) return output;
+			}
+
+			return null;
 		},
-		crypto_aead_xchacha20poly1305_ietf_encrypt: (
-			plaintext: Buffer,
-			additionalData: Buffer,
-			nonce: Buffer,
-			key: ArrayBufferLike,
-		) => {
-			const cipherText = Buffer.alloc(plaintext.length + sodium.crypto_aead_xchacha20poly1305_ietf_ABYTES);
-			sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(cipherText, plaintext, additionalData, null, nonce, key);
-			return cipherText;
+		close: (opusPacket: Buffer, nonce: Buffer, secretKey: Uint8Array) => {
+			const output = Buffer.allocUnsafe(opusPacket.length + sodium.crypto_box_MACBYTES);
+			sodium.crypto_secretbox_easy(output, opusPacket, nonce, secretKey);
+			return output;
+		},
+		random: (num: number, buffer: Buffer = Buffer.allocUnsafe(num)) => {
+			sodium.randombytes_buf(buffer);
+			return buffer;
 		},
 	}),
 	sodium: (sodium: any): Methods => ({
-		crypto_aead_xchacha20poly1305_ietf_decrypt: (
-			cipherText: Buffer,
-			additionalData: Buffer,
-			nonce: Buffer,
-			key: ArrayBufferLike,
-		) => sodium.api.crypto_aead_xchacha20poly1305_ietf_decrypt(cipherText, additionalData, null, nonce, key),
-		crypto_aead_xchacha20poly1305_ietf_encrypt: (
-			plaintext: Buffer,
-			additionalData: Buffer,
-			nonce: Buffer,
-			key: ArrayBufferLike,
-		) => sodium.api.crypto_aead_xchacha20poly1305_ietf_encrypt(plaintext, additionalData, null, nonce, key),
+		open: sodium.api.crypto_secretbox_open_easy,
+		close: sodium.api.crypto_secretbox_easy,
+		random: (num: number, buffer: Buffer = Buffer.allocUnsafe(num)) => {
+			sodium.api.randombytes_buf(buffer);
+			return buffer;
+		},
 	}),
 	'libsodium-wrappers': (sodium: any): Methods => ({
-		crypto_aead_xchacha20poly1305_ietf_decrypt: (
-			cipherText: Buffer,
-			additionalData: Buffer,
-			nonce: Buffer,
-			key: ArrayBufferLike,
-		) => sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(null, cipherText, additionalData, nonce, key),
-		crypto_aead_xchacha20poly1305_ietf_encrypt: (
-			plaintext: Buffer,
-			additionalData: Buffer,
-			nonce: Buffer,
-			key: ArrayBufferLike,
-		) => sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(plaintext, additionalData, null, nonce, key),
+		open: sodium.crypto_secretbox_open_easy,
+		close: sodium.crypto_secretbox_easy,
+		random: sodium.randombytes_buf,
 	}),
-	'@stablelib/xchacha20poly1305': (stablelib: any): Methods => ({
-		crypto_aead_xchacha20poly1305_ietf_decrypt(plaintext, additionalData, nonce, key) {
-			const crypto = new stablelib.XChaCha20Poly1305(key);
-			return crypto.open(nonce, plaintext, additionalData);
-		},
-		crypto_aead_xchacha20poly1305_ietf_encrypt(cipherText, additionalData, nonce, key) {
-			const crypto = new stablelib.XChaCha20Poly1305(key);
-			return crypto.seal(nonce, cipherText, additionalData);
-		},
-	}),
-	'@noble/ciphers/chacha': (noble: any): Methods => ({
-		crypto_aead_xchacha20poly1305_ietf_decrypt(cipherText, additionalData, nonce, key) {
-			const chacha = noble.xchacha20poly1305(key, nonce, additionalData);
-			return chacha.decrypt(cipherText);
-		},
-		crypto_aead_xchacha20poly1305_ietf_encrypt(plaintext, additionalData, nonce, key) {
-			const chacha = noble.xchacha20poly1305(key, nonce, additionalData);
-			return chacha.encrypt(plaintext);
-		},
+	tweetnacl: (tweetnacl: any): Methods => ({
+		open: tweetnacl.secretbox.open,
+		close: tweetnacl.secretbox,
+		random: tweetnacl.randomBytes,
 	}),
 } as const;
 
 const fallbackError = () => {
 	throw new Error(
 		`Cannot play audio as no valid encryption package is installed.
-- Install one of:
-  - sodium
-  - libsodium-wrappers
-  - @stablelib/xchacha20poly1305
-  - @noble/ciphers.
+- Install sodium, libsodium-wrappers, or tweetnacl.
 - Use the generateDependencyReport() function for more information.\n`,
 	);
 };
 
 const methods: Methods = {
-	crypto_aead_xchacha20poly1305_ietf_encrypt: fallbackError,
-	crypto_aead_xchacha20poly1305_ietf_decrypt: fallbackError,
+	open: fallbackError,
+	close: fallbackError,
+	random: fallbackError,
 };
 
-// eslint-disable-next-line no-async-promise-executor
-export const secretboxLoadPromise = new Promise<void>(async (resolve) => {
+void (async () => {
 	for (const libName of Object.keys(libs) as (keyof typeof libs)[]) {
 		try {
-			const lib = await import(libName);
-
-			if (libName === 'libsodium-wrappers' && lib.ready) {
-				await lib.ready;
-			}
-
+			// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+			const lib = require(libName);
+			if (libName === 'libsodium-wrappers' && lib.ready) await lib.ready;
 			Object.assign(methods, libs[libName](lib));
-
 			break;
 		} catch {}
 	}
-
-	resolve();
-});
+})();
 
 export { methods };

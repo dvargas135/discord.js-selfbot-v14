@@ -1,6 +1,6 @@
 'use strict';
 
-const { Events } = require('../../../util/Events.js');
+const Events = require('../../../util/Events.js');
 
 module.exports = (client, { d: data }) => {
   const guild = client.guilds.cache.get(data.guild_id);
@@ -12,7 +12,6 @@ module.exports = (client, { d: data }) => {
 
   /**
    * Emitted whenever a guild soundboard sound is updated.
-   *
    * @event Client#guildSoundboardSoundUpdate
    * @param {?SoundboardSound} oldGuildSoundboardSound The guild soundboard sound before the update
    * @param {SoundboardSound} newGuildSoundboardSound The guild soundboard sound after the update

@@ -3,7 +3,7 @@
 const process = require('node:process');
 const { GatewayIntentBits } = require('discord-api-types/v10');
 const { token, prefix, owner } = require('./auth.js');
-const { Client, Events, RESTEvents } = require('../src/index.js');
+const { Client } = require('../src');
 
 // eslint-disable-next-line no-console
 const log = (...args) => console.log(process.uptime().toFixed(3), ...args);
@@ -13,12 +13,12 @@ const client = new Client({
   shardCount: 2,
 });
 
-client.on(Events.Debug, log);
-client.on(Events.ClientReady, () => {
+client.on('debug', log);
+client.on('ready', () => {
   log('READY', client.user.tag, client.user.id);
 });
-client.rest.on(RESTEvents.RateLimited, log);
-client.on(Events.Error, console.error);
+client.on('rateLimit', log);
+client.on('error', console.error);
 
 const commands = {
   eval: message => {
@@ -37,7 +37,7 @@ const commands = {
   ping: message => message.channel.send('pong'),
 };
 
-client.on(Events.MessageCreate, message => {
+client.on('messageCreate', message => {
   if (!message.content.startsWith(prefix) || message.author.bot) return;
 
   message.content = message.content.replace(prefix, '').trim().split(' ');

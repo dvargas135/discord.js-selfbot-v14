@@ -1,13 +1,10 @@
 'use strict';
 
-const { PollAnswerVoterManager } = require('../managers/PollAnswerVoterManager.js');
-const { resolveGuildEmoji } = require('../util/Util.js');
-const { Base } = require('./Base.js');
-const { Emoji } = require('./Emoji.js');
+const Base = require('./Base');
+const { Emoji } = require('./Emoji');
 
 /**
  * Represents an answer to a {@link Poll}
- *
  * @extends {Base}
  */
 class PollAnswer extends Base {
@@ -16,35 +13,31 @@ class PollAnswer extends Base {
 
     /**
      * The {@link Poll} this answer is part of
-     *
      * @name PollAnswer#poll
-     * @type {Poll|PartialPoll}
+     * @type {Poll}
      * @readonly
      */
     Object.defineProperty(this, 'poll', { value: poll });
 
     /**
      * The id of this answer
-     *
      * @type {number}
      */
     this.id = data.answer_id;
 
     /**
-     * The manager of the voters for this answer
-     *
-     * @type {PollAnswerVoterManager}
+     * The text of this answer
+     * @type {?string}
      */
-    this.voters = new PollAnswerVoterManager(this);
+    this.text = data.poll_media.text ?? null;
 
     /**
      * The raw emoji of this answer
-     *
      * @name PollAnswer#_emoji
      * @type {?APIPartialEmoji}
      * @private
      */
-    Object.defineProperty(this, '_emoji', { value: null, writable: true });
+    Object.defineProperty(this, '_emoji', { value: data.poll_media.emoji ?? null });
 
     this._patch(data);
   }
@@ -54,44 +47,42 @@ class PollAnswer extends Base {
     if ('count' in data) {
       /**
        * The amount of votes this answer has
-       *
        * @type {number}
        */
       this.voteCount = data.count;
     } else {
-      this.voteCount ??= this.voters.cache.size;
-    }
-
-    /**
-     * The text of this answer
-     *
-     * @type {?string}
-     */
-    this.text ??= data.poll_media?.text ?? null;
-
-    if (data.poll_media?.emoji) {
-      this._emoji = data.poll_media.emoji;
+      this.voteCount ??= 0;
     }
   }
 
   /**
    * The emoji of this answer
-   *
    * @type {?(GuildEmoji|Emoji)}
    */
   get emoji() {
     if (!this._emoji || (!this._emoji.id && !this._emoji.name)) return null;
-    return resolveGuildEmoji(this.client, this._emoji.id) ?? new Emoji(this.client, this._emoji);
+    return this.client.emojis.cache.get(this._emoji.id) ?? new Emoji(this.client, this._emoji);
   }
 
   /**
-   * Whether this poll answer is a partial.
-   *
-   * @type {boolean}
-   * @readonly
+   * Options used for fetching voters of a poll answer.
+   * @typedef {Object} BaseFetchPollAnswerVotersOptions
+   * @property {number} [limit] The maximum number of voters to fetch
+   * @property {Snowflake} [after] The user id to fetch voters after
    */
-  get partial() {
-    return this.poll.partial || (this.text === null && this.emoji === null);
+
+  /**
+   * Fetches the users that voted for this answer.
+   * @param {BaseFetchPollAnswerVotersOptions} [options={}] The options for fetching voters
+   * @returns {Promise<Collection<Snowflake, User>>}
+   */
+  fetchVoters({ after, limit } = {}) {
+    return this.poll.message.channel.messages.fetchPollAnswerVoters({
+      messageId: this.poll.message.id,
+      answerId: this.id,
+      after,
+      limit,
+    });
   }
 }
 

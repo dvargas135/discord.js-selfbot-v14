@@ -1,18 +1,15 @@
-/* eslint-disable jsdoc/check-values */
 'use strict';
 
 const { MessageFlags } = require('discord-api-types/v10');
-const { BitField } = require('./BitField.js');
+const BitField = require('./BitField');
 
 /**
  * Data structure that makes it easy to interact with a {@link Message#flags} bitfield.
- *
  * @extends {BitField}
  */
 class MessageFlagsBitField extends BitField {
   /**
    * Numeric message flags.
-   *
    * @type {MessageFlags}
    * @memberof MessageFlagsBitField
    */
@@ -28,19 +25,17 @@ class MessageFlagsBitField extends BitField {
 
 /**
  * Data that can be resolved to give a message flags bit field. This can be:
- * - A string (see {@link MessageFlagsBitField.Flags})
- * - A message flag
- * - An instance of {@link MessageFlagsBitField}
- * - An array of `MessageFlagsResolvable`
- *
+ * * A string (see {@link MessageFlagsBitField.Flags})
+ * * A message flag
+ * * An instance of {@link MessageFlagsBitField}
+ * * An array of `MessageFlagsResolvable`
  * @typedef {string|number|MessageFlagsBitField|MessageFlagsResolvable[]} MessageFlagsResolvable
  */
 
 /**
  * Bitfield of the packed bits
- *
  * @type {number}
  * @name MessageFlagsBitField#bitfield
  */
 
-exports.MessageFlagsBitField = MessageFlagsBitField;
+module.exports = MessageFlagsBitField;

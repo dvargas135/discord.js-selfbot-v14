@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 // @ts-nocheck
 import { EventEmitter } from 'node:events';
-import { vitest, describe, test, expect, beforeEach } from 'vitest';
 import * as _DataStore from '../src/DataStore';
 import {
 	createVoiceConnection,
@@ -15,40 +14,34 @@ import {
 } from '../src/VoiceConnection';
 import * as _AudioPlayer from '../src/audio/AudioPlayer';
 import { PlayerSubscription as _PlayerSubscription } from '../src/audio/PlayerSubscription';
-import * as Networking from '../src/networking/Networking';
+import * as _Networking from '../src/networking/Networking';
 import type { DiscordGatewayAdapterLibraryMethods } from '../src/util/adapter';
 
-vitest.mock('../src/audio/AudioPlayer');
-vitest.mock('../src/audio/PlayerSubscription');
-vitest.mock('../src/DataStore');
-vitest.mock('../src/networking/Networking', async (importOriginal) => {
-	// eslint-disable-next-line @typescript-eslint/consistent-type-imports
-	const actual = await importOriginal<typeof import('../src/networking/Networking')>();
-	const Networking = actual.Networking;
-	Networking.prototype.createWebSocket = vitest.fn();
-	return {
-		...actual,
-		Networking,
-	};
+jest.mock('../src/audio/AudioPlayer');
+jest.mock('../src/audio/PlayerSubscription');
+jest.mock('../src/DataStore');
+jest.mock('../src/networking/Networking');
+
+const DataStore = _DataStore as unknown as jest.Mocked<typeof _DataStore>;
+const Networking = _Networking as unknown as jest.Mocked<typeof _Networking>;
+const AudioPlayer = _AudioPlayer as unknown as jest.Mocked<typeof _AudioPlayer>;
+const PlayerSubscription = _PlayerSubscription as unknown as jest.Mock<_PlayerSubscription>;
+
+Networking.Networking.mockImplementation(function mockedConstructor() {
+	this.state = {};
+	return this;
 });
 
-const DataStore = _DataStore as unknown as vitest.Mocked<typeof _DataStore>;
-const AudioPlayer = _AudioPlayer as unknown as vitest.Mocked<typeof _AudioPlayer>;
-const PlayerSubscription = _PlayerSubscription as unknown as vitest.Mock<_PlayerSubscription>;
-
-const _NetworkingClass = Networking.Networking;
-vitest.spyOn(Networking, 'Networking').mockImplementation((...args) => new _NetworkingClass(...args));
-
 function createFakeAdapter() {
-	const sendPayload = vitest.fn();
+	const sendPayload = jest.fn();
 	sendPayload.mockReturnValue(true);
-	const destroy = vitest.fn();
+	const destroy = jest.fn();
 	const libMethods: Partial<DiscordGatewayAdapterLibraryMethods> = {};
 	return {
 		sendPayload,
 		destroy,
 		libMethods,
-		creator: vitest.fn((methods) => {
+		creator: jest.fn((methods) => {
 			Object.assign(libMethods, methods);
 			return {
 				sendPayload,
@@ -131,7 +124,7 @@ describe('createVoiceConnection', () => {
 			adapterCreator: existingAdapter.creator,
 		});
 
-		const stateSetter = vitest.spyOn(existingVoiceConnection, 'state', 'set');
+		const stateSetter = jest.spyOn(existingVoiceConnection, 'state', 'set');
 
 		// @ts-expect-error: We're testing
 		DataStore.getVoiceConnection.mockImplementation((guildId, group = 'default') =>
@@ -170,7 +163,7 @@ describe('createVoiceConnection', () => {
 			reason: VoiceConnectionDisconnectReason.EndpointRemoved,
 		};
 
-		const rejoinSpy = vitest.spyOn(existingVoiceConnection, 'rejoin');
+		const rejoinSpy = jest.spyOn(existingVoiceConnection, 'rejoin');
 
 		// @ts-expect-error: We're testing
 		DataStore.getVoiceConnection.mockImplementation((guildId, group = 'default') =>
@@ -229,7 +222,7 @@ describe('createVoiceConnection', () => {
 describe('VoiceConnection#addServerPacket', () => {
 	test('Stores the packet and attempts to configure networking', () => {
 		const { voiceConnection } = createFakeVoiceConnection();
-		voiceConnection.configureNetworking = vitest.fn();
+		voiceConnection.configureNetworking = jest.fn();
 		const dummy = {
 			endpoint: 'discord.com',
 			guild_id: 123,
@@ -243,7 +236,7 @@ describe('VoiceConnection#addServerPacket', () => {
 	test('Overwrites existing packet', () => {
 		const { voiceConnection } = createFakeVoiceConnection();
 		voiceConnection['packets'].server = Symbol('old') as any;
-		voiceConnection.configureNetworking = vitest.fn();
+		voiceConnection.configureNetworking = jest.fn();
 		const dummy = {
 			endpoint: 'discord.com',
 			guild_id: 123,
@@ -257,7 +250,7 @@ describe('VoiceConnection#addServerPacket', () => {
 	test('Disconnects when given a null endpoint', () => {
 		const { voiceConnection } = createFakeVoiceConnection();
 		voiceConnection['packets'].server = Symbol('old') as any;
-		voiceConnection.configureNetworking = vitest.fn();
+		voiceConnection.configureNetworking = jest.fn();
 		const dummy = {
 			endpoint: null,
 			guild_id: 123,
@@ -344,18 +337,14 @@ describe('VoiceConnection#configureNetworking', () => {
 				sessionId: state.session_id,
 				userId: state.user_id,
 			},
-			{
-				daveEncryption: true,
-				debug: false,
-				decryptionFailureTolerance: undefined,
-			},
+			false,
 		);
 		expect(voiceConnection.state).toMatchObject({
 			status: VoiceConnectionStatus.Connecting,
 			adapter,
 		});
 		expect((voiceConnection.state as unknown as VoiceConnectionConnectingState).networking).toBeInstanceOf(
-			_NetworkingClass,
+			Networking.Networking,
 		);
 	});
 });
@@ -410,24 +399,24 @@ describe('VoiceConnection#onNetworkingClose', () => {
 describe('VoiceConnection#onNetworkingStateChange', () => {
 	test('Does nothing when status code identical', () => {
 		const { voiceConnection } = createFakeVoiceConnection();
-		const stateSetter = vitest.spyOn(voiceConnection, 'state', 'set');
+		const stateSetter = jest.spyOn(voiceConnection, 'state', 'set');
 		voiceConnection['onNetworkingStateChange'](
-			{ code: Networking.NetworkingStatusCode.Ready } as any,
-			{ code: Networking.NetworkingStatusCode.Ready } as any,
+			{ code: _Networking.NetworkingStatusCode.Ready } as any,
+			{ code: _Networking.NetworkingStatusCode.Ready } as any,
 		);
 		voiceConnection['onNetworkingStateChange'](
-			{ code: Networking.NetworkingStatusCode.Closed } as any,
-			{ code: Networking.NetworkingStatusCode.Closed } as any,
+			{ code: _Networking.NetworkingStatusCode.Closed } as any,
+			{ code: _Networking.NetworkingStatusCode.Closed } as any,
 		);
 		expect(stateSetter).not.toHaveBeenCalled();
 	});
 
 	test('Does nothing when not in Ready or Connecting states', () => {
 		const { voiceConnection } = createFakeVoiceConnection();
-		const stateSetter = vitest.spyOn(voiceConnection, 'state', 'set');
+		const stateSetter = jest.spyOn(voiceConnection, 'state', 'set');
 		const call = [
-			{ code: Networking.NetworkingStatusCode.Ready } as any,
-			{ code: Networking.NetworkingStatusCode.Closed } as any,
+			{ code: _Networking.NetworkingStatusCode.Ready } as any,
+			{ code: _Networking.NetworkingStatusCode.Closed } as any,
 		];
 		voiceConnection['_state'] = { status: VoiceConnectionStatus.Signalling } as any;
 		voiceConnection['onNetworkingStateChange'](call[0], call[1]);
@@ -440,7 +429,7 @@ describe('VoiceConnection#onNetworkingStateChange', () => {
 
 	test('Transitions to Ready', () => {
 		const { voiceConnection } = createFakeVoiceConnection();
-		const stateSetter = vitest.spyOn(voiceConnection, 'state', 'set');
+		const stateSetter = jest.spyOn(voiceConnection, 'state', 'set');
 		voiceConnection['_state'] = {
 			...(voiceConnection.state as VoiceConnectionSignallingState),
 			status: VoiceConnectionStatus.Connecting,
@@ -448,8 +437,8 @@ describe('VoiceConnection#onNetworkingStateChange', () => {
 		};
 
 		voiceConnection['onNetworkingStateChange'](
-			{ code: Networking.NetworkingStatusCode.Closed } as any,
-			{ code: Networking.NetworkingStatusCode.Ready } as any,
+			{ code: _Networking.NetworkingStatusCode.Closed } as any,
+			{ code: _Networking.NetworkingStatusCode.Ready } as any,
 		);
 
 		expect(stateSetter).toHaveBeenCalledTimes(1);
@@ -458,7 +447,7 @@ describe('VoiceConnection#onNetworkingStateChange', () => {
 
 	test('Transitions to Connecting', () => {
 		const { voiceConnection } = createFakeVoiceConnection();
-		const stateSetter = vitest.spyOn(voiceConnection, 'state', 'set');
+		const stateSetter = jest.spyOn(voiceConnection, 'state', 'set');
 		voiceConnection['_state'] = {
 			...(voiceConnection.state as VoiceConnectionSignallingState),
 			status: VoiceConnectionStatus.Connecting,
@@ -466,8 +455,8 @@ describe('VoiceConnection#onNetworkingStateChange', () => {
 		};
 
 		voiceConnection['onNetworkingStateChange'](
-			{ code: Networking.NetworkingStatusCode.Ready } as any,
-			{ code: Networking.NetworkingStatusCode.Identifying } as any,
+			{ code: _Networking.NetworkingStatusCode.Ready } as any,
+			{ code: _Networking.NetworkingStatusCode.Identifying } as any,
 		);
 
 		expect(stateSetter).toHaveBeenCalledTimes(1);
@@ -609,7 +598,7 @@ describe('VoiceConnection#subscribe', () => {
 	test('Does nothing in Destroyed state', () => {
 		const { voiceConnection } = createFakeVoiceConnection();
 		const player = new AudioPlayer.AudioPlayer();
-		player['subscribe'] = vitest.fn();
+		player['subscribe'] = jest.fn();
 		voiceConnection.state = { status: VoiceConnectionStatus.Destroyed };
 		expect(voiceConnection.subscribe(player)).toBeUndefined();
 		expect(player['subscribe']).not.toHaveBeenCalled();
@@ -621,7 +610,7 @@ describe('VoiceConnection#subscribe', () => {
 		const adapter = (voiceConnection.state as VoiceConnectionSignallingState).adapter;
 		const player = new AudioPlayer.AudioPlayer();
 		const dummy = Symbol('dummy');
-		player['subscribe'] = vitest.fn().mockImplementation(() => dummy);
+		player['subscribe'] = jest.fn().mockImplementation(() => dummy);
 		expect(voiceConnection.subscribe(player)).toEqual(dummy);
 		expect(player['subscribe']).toHaveBeenCalledWith(voiceConnection);
 		expect(voiceConnection.state).toMatchObject({
@@ -635,7 +624,7 @@ describe('VoiceConnection#onSubscriptionRemoved', () => {
 	test('Does nothing in Destroyed state', () => {
 		const { voiceConnection } = createFakeVoiceConnection();
 		const subscription = new PlayerSubscription(voiceConnection, new AudioPlayer.AudioPlayer());
-		subscription.unsubscribe = vitest.fn();
+		subscription.unsubscribe = jest.fn();
 
 		voiceConnection.state = { status: VoiceConnectionStatus.Destroyed };
 		voiceConnection['onSubscriptionRemoved'](subscription);
@@ -646,7 +635,7 @@ describe('VoiceConnection#onSubscriptionRemoved', () => {
 	test('Does nothing when subscription is not the same as the stored one', () => {
 		const { voiceConnection } = createFakeVoiceConnection();
 		const subscription = new PlayerSubscription(voiceConnection, new AudioPlayer.AudioPlayer());
-		subscription.unsubscribe = vitest.fn();
+		subscription.unsubscribe = jest.fn();
 
 		voiceConnection.state = { ...(voiceConnection.state as VoiceConnectionSignallingState), subscription };
 		voiceConnection['onSubscriptionRemoved'](Symbol('new subscription') as any);
@@ -660,7 +649,7 @@ describe('VoiceConnection#onSubscriptionRemoved', () => {
 	test('Unsubscribes in a live state with matching subscription', () => {
 		const { voiceConnection } = createFakeVoiceConnection();
 		const subscription = new PlayerSubscription(voiceConnection, new AudioPlayer.AudioPlayer());
-		subscription.unsubscribe = vitest.fn();
+		subscription.unsubscribe = jest.fn();
 
 		voiceConnection.state = { ...(voiceConnection.state as VoiceConnectionSignallingState), subscription };
 		voiceConnection['onSubscriptionRemoved'](subscription);
@@ -678,7 +667,7 @@ describe('VoiceConnection#onSubscriptionRemoved', () => {
 
 			const oldNetworking = new Networking.Networking({} as any, false);
 			oldNetworking.state = {
-				code: Networking.NetworkingStatusCode.Ready,
+				code: _Networking.NetworkingStatusCode.Ready,
 				connectionData: {} as any,
 				connectionOptions: {} as any,
 				udp: new EventEmitter() as any,
@@ -708,7 +697,7 @@ describe('VoiceConnection#onSubscriptionRemoved', () => {
 
 			const oldNetworking = new Networking.Networking({} as any, false);
 			oldNetworking.state = {
-				code: Networking.NetworkingStatusCode.Ready,
+				code: _Networking.NetworkingStatusCode.Ready,
 				connectionData: {} as any,
 				connectionOptions: {} as any,
 				udp,
@@ -737,7 +726,7 @@ describe('VoiceConnection#onSubscriptionRemoved', () => {
 
 			const newNetworking = new Networking.Networking({} as any, false);
 			newNetworking.state = {
-				code: Networking.NetworkingStatusCode.Ready,
+				code: _Networking.NetworkingStatusCode.Ready,
 				connectionData: {} as any,
 				connectionOptions: {} as any,
 				udp: new EventEmitter() as any,
@@ -760,7 +749,7 @@ describe('VoiceConnection#onSubscriptionRemoved', () => {
 describe('Adapter', () => {
 	test('onVoiceServerUpdate', () => {
 		const { adapter, voiceConnection } = createFakeVoiceConnection();
-		voiceConnection['addServerPacket'] = vitest.fn();
+		voiceConnection['addServerPacket'] = jest.fn();
 		const dummy = Symbol('dummy') as any;
 		adapter.libMethods.onVoiceServerUpdate!(dummy);
 		expect(voiceConnection['addServerPacket']).toHaveBeenCalledWith(dummy);
@@ -768,7 +757,7 @@ describe('Adapter', () => {
 
 	test('onVoiceStateUpdate', () => {
 		const { adapter, voiceConnection } = createFakeVoiceConnection();
-		voiceConnection['addStatePacket'] = vitest.fn();
+		voiceConnection['addStatePacket'] = jest.fn();
 		const dummy = Symbol('dummy') as any;
 		adapter.libMethods.onVoiceStateUpdate!(dummy);
 		expect(voiceConnection['addStatePacket']).toHaveBeenCalledWith(dummy);

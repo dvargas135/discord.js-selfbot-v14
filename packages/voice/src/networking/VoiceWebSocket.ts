@@ -1,17 +1,6 @@
-import { Buffer } from 'node:buffer';
 import { EventEmitter } from 'node:events';
-import type { VoiceSendPayload } from 'discord-api-types/voice/v8';
-import { VoiceOpcodes } from 'discord-api-types/voice/v8';
+import { VoiceOpcodes } from 'discord-api-types/voice/v4';
 import WebSocket, { type MessageEvent } from 'ws';
-
-/**
- * A binary WebSocket message.
- */
-export interface BinaryWebSocketMessage {
-	op: VoiceOpcodes;
-	payload: Buffer;
-	seq: number;
-}
 
 export interface VoiceWebSocket extends EventEmitter {
 	on(event: 'error', listener: (error: Error) => void): this;
@@ -29,12 +18,6 @@ export interface VoiceWebSocket extends EventEmitter {
 	 * @eventProperty
 	 */
 	on(event: 'packet', listener: (packet: any) => void): this;
-	/**
-	 * Binary message event.
-	 *
-	 * @eventProperty
-	 */
-	on(event: 'binary', listener: (message: BinaryWebSocketMessage) => void): this;
 }
 
 /**
@@ -68,11 +51,6 @@ export class VoiceWebSocket extends EventEmitter {
 	 * The last recorded ping.
 	 */
 	public ping?: number;
-
-	/**
-	 * The last sequence number acknowledged from Discord. Will be `-1` if no sequence numbered messages have been received.
-	 */
-	public sequence = -1;
 
 	/**
 	 * The debug logger function, if debugging is enabled.
@@ -119,25 +97,12 @@ export class VoiceWebSocket extends EventEmitter {
 
 	/**
 	 * Handles message events on the WebSocket. Attempts to JSON parse the messages and emit them
-	 * as packets. Binary messages will be parsed and emitted.
+	 * as packets.
 	 *
 	 * @param event - The message event
 	 */
 	public onMessage(event: MessageEvent) {
-		if (event.data instanceof Buffer || event.data instanceof ArrayBuffer) {
-			const buffer = event.data instanceof ArrayBuffer ? Buffer.from(event.data) : event.data;
-			const seq = buffer.readUInt16BE(0);
-			const op = buffer.readUInt8(2);
-			const payload = buffer.subarray(3);
-
-			this.sequence = seq;
-			this.debug?.(`<< [bin] opcode ${op}, seq ${seq}, ${payload.byteLength} bytes`);
-
-			this.emit('binary', { op, seq, payload });
-			return;
-		} else if (typeof event.data !== 'string') {
-			return;
-		}
+		if (typeof event.data !== 'string') return;
 
 		this.debug?.(`<< ${event.data}`);
 
@@ -148,10 +113,6 @@ export class VoiceWebSocket extends EventEmitter {
 			const err = error as Error;
 			this.emit('error', err);
 			return;
-		}
-
-		if (packet.seq) {
-			this.sequence = packet.seq;
 		}
 
 		if (packet.op === VoiceOpcodes.HeartbeatAck) {
@@ -168,28 +129,11 @@ export class VoiceWebSocket extends EventEmitter {
 	 *
 	 * @param packet - The packet to send
 	 */
-	public sendPacket(packet: VoiceSendPayload) {
+	public sendPacket(packet: any) {
 		try {
 			const stringified = JSON.stringify(packet);
 			this.debug?.(`>> ${stringified}`);
 			this.ws.send(stringified);
-		} catch (error) {
-			const err = error as Error;
-			this.emit('error', err);
-		}
-	}
-
-	/**
-	 * Sends a binary message over the WebSocket.
-	 *
-	 * @param opcode - The opcode to use
-	 * @param payload - The payload to send
-	 */
-	public sendBinaryMessage(opcode: VoiceOpcodes, payload: Buffer) {
-		try {
-			const message = Buffer.concat([new Uint8Array([opcode]), payload]);
-			this.debug?.(`>> [bin] opcode ${opcode}, ${payload.byteLength} bytes`);
-			this.ws.send(message);
 		} catch (error) {
 			const err = error as Error;
 			this.emit('error', err);
@@ -206,11 +150,7 @@ export class VoiceWebSocket extends EventEmitter {
 		this.sendPacket({
 			op: VoiceOpcodes.Heartbeat,
 			// eslint-disable-next-line id-length
-			d: {
-				// eslint-disable-next-line id-length
-				t: nonce,
-				seq_ack: this.sequence,
-			},
+			d: nonce,
 		});
 	}
 

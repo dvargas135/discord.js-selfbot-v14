@@ -7,15 +7,13 @@ class UnfurledMediaItem {
   constructor(data) {
     /**
      * The API data associated with this media item
-     *
      * @type {APIUnfurledMediaItem}
      */
     this.data = data;
   }
 
   /**
-   * The URL of this media item
-   *
+   * The URL of this media gallery item
    * @type {string}
    * @readonly
    */
@@ -25,7 +23,6 @@ class UnfurledMediaItem {
 
   /**
    * Returns the API-compatible JSON for this media item
-   *
    * @returns {APIUnfurledMediaItem}
    */
   toJSON() {
@@ -33,4 +30,4 @@ class UnfurledMediaItem {
   }
 }
 
-exports.UnfurledMediaItem = UnfurledMediaItem;
+module.exports = UnfurledMediaItem;

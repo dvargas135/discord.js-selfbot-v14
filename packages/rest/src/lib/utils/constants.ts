@@ -25,7 +25,6 @@ export const DefaultRestOptions = {
 	offset: 50,
 	rejectOnRateLimit: null,
 	retries: 3,
-	retryBackoff: 0,
 	timeout: 15_000,
 	userAgentAppendix: DefaultUserAgentAppendix,
 	version: APIVersion,
@@ -66,4 +65,9 @@ export const OverwrittenMimeTypes = {
 
 export const BurstHandlerMajorIdKey = 'burst';
 
-export const AUTH_UUID_NAMESPACE = 'acc82a4c-f887-417b-a69c-f74096ff7e59';
+/**
+ * Prefix for deprecation warnings.
+ *
+ * @internal
+ */
+export const DEPRECATION_WARNING_PREFIX = 'DeprecationWarning' as const;

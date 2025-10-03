@@ -1,6 +1,6 @@
 'use strict';
 
-const { Events } = require('../../../util/Events.js');
+const Events = require('../../../util/Events.js');
 
 module.exports = (client, { d: data }) => {
   const guild = client.guilds.cache.get(data.guild_id);
@@ -11,7 +11,6 @@ module.exports = (client, { d: data }) => {
 
   /**
    * Emitted whenever a guild soundboard sound is created.
-   *
    * @event Client#guildSoundboardSoundCreate
    * @param {SoundboardSound} soundboardSound The created guild soundboard sound
    */

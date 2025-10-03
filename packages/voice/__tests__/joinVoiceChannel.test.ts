@@ -1,10 +1,9 @@
 // @ts-nocheck
-import { describe, test, expect, vitest, beforeAll, beforeEach } from 'vitest';
 import * as VoiceConnection from '../src/VoiceConnection';
 import { joinVoiceChannel } from '../src/joinVoiceChannel';
 
-const adapterCreator = () => ({ destroy: vitest.fn(), send: vitest.fn() }) as any;
-const createVoiceConnection = vitest.spyOn(VoiceConnection, 'createVoiceConnection');
+const adapterCreator = () => ({ destroy: jest.fn(), send: jest.fn() }) as any;
+const createVoiceConnection = jest.spyOn(VoiceConnection, 'createVoiceConnection');
 
 beforeAll(() => {
 	createVoiceConnection.mockImplementation(() => null as any);

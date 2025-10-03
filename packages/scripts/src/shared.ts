@@ -10,11 +10,9 @@ export const PACKAGES = [
 	'next',
 	'proxy',
 	'rest',
-	'structures',
 	'util',
 	'voice',
 	'ws',
-	'discord-api-types',
 ];
 
 export async function fetchVersions(pkg: string) {

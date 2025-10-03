@@ -66,6 +66,11 @@
  * @property {string} MessageUpdate messageUpdate
  * @property {string} PresenceUpdate presenceUpdate
  * @property {string} SoundboardSounds soundboardSounds
+ * @property {string} ShardDisconnect shardDisconnect
+ * @property {string} ShardError shardError
+ * @property {string} ShardReady shardReady
+ * @property {string} ShardReconnecting shardReconnecting
+ * @property {string} ShardResume shardResume
  * @property {string} StageInstanceCreate stageInstanceCreate
  * @property {string} StageInstanceDelete stageInstanceDelete
  * @property {string} StageInstanceUpdate stageInstanceUpdate
@@ -92,7 +97,7 @@
  * @type {Events}
  * @ignore
  */
-exports.Events = {
+module.exports = {
   ApplicationCommandPermissionsUpdate: 'applicationCommandPermissionsUpdate',
   AutoModerationActionExecution: 'autoModerationActionExecution',
   AutoModerationRuleCreate: 'autoModerationRuleCreate',
@@ -106,8 +111,8 @@ exports.Events = {
   ClientReady: 'clientReady',
   Debug: 'debug',
   EntitlementCreate: 'entitlementCreate',
-  EntitlementDelete: 'entitlementDelete',
   EntitlementUpdate: 'entitlementUpdate',
+  EntitlementDelete: 'entitlementDelete',
   Error: 'error',
   GuildAuditLogEntryCreate: 'guildAuditLogEntryCreate',
   GuildAvailable: 'guildAvailable',
@@ -157,12 +162,18 @@ exports.Events = {
   MessageUpdate: 'messageUpdate',
   PresenceUpdate: 'presenceUpdate',
   SoundboardSounds: 'soundboardSounds',
+  Raw: 'raw',
+  ShardDisconnect: 'shardDisconnect',
+  ShardError: 'shardError',
+  ShardReady: 'shardReady',
+  ShardReconnecting: 'shardReconnecting',
+  ShardResume: 'shardResume',
   StageInstanceCreate: 'stageInstanceCreate',
   StageInstanceDelete: 'stageInstanceDelete',
   StageInstanceUpdate: 'stageInstanceUpdate',
   SubscriptionCreate: 'subscriptionCreate',
-  SubscriptionDelete: 'subscriptionDelete',
   SubscriptionUpdate: 'subscriptionUpdate',
+  SubscriptionDelete: 'subscriptionDelete',
   ThreadCreate: 'threadCreate',
   ThreadDelete: 'threadDelete',
   ThreadListSync: 'threadListSync',

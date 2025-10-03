@@ -7,8 +7,7 @@ function createEnum(keys) {
     obj[key] = index;
     obj[index] = key;
   }
-
   return obj;
 }
 
-exports.createEnum = createEnum;
+module.exports = { createEnum };

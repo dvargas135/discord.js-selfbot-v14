@@ -40,7 +40,6 @@ export type ToEventMap<
 	];
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface IBaseBroker<TEvents extends {}> {
 	/**
 	 * Subscribes to the given events
@@ -52,7 +51,6 @@ export interface IBaseBroker<TEvents extends {}> {
 	unsubscribe(events: (keyof TEvents)[]): Promise<void>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface IPubSubBroker<TEvents extends {}>
 	extends IBaseBroker<TEvents>,
 		AsyncEventEmitter<ToEventMap<TEvents>> {

@@ -1,5 +1,5 @@
-import type { CommandInteraction, RESTPostAPIApplicationCommandsJSONBody } from 'discord.js';
-import { z } from 'zod';
+import type { RESTPostAPIApplicationCommandsJSONBody, CommandInteraction } from 'npm:discord.js@^14.16.0';
+import { z } from 'npm:zod@^3.23.8';
 import type { StructurePredicate } from '../util/loaders.ts';
 
 /**

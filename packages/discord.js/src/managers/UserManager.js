@@ -1,16 +1,16 @@
 'use strict';
 
 const { ChannelType, Routes } = require('discord-api-types/v10');
-const { DiscordjsError, ErrorCodes } = require('../errors/index.js');
-const { GuildMember } = require('../structures/GuildMember.js');
-const { Message } = require('../structures/Message.js');
-const { ThreadMember } = require('../structures/ThreadMember.js');
-const { User } = require('../structures/User.js');
-const { CachedManager } = require('./CachedManager.js');
+const CachedManager = require('./CachedManager');
+const { DiscordjsError, ErrorCodes } = require('../errors');
+const { GuildMember } = require('../structures/GuildMember');
+const { Message } = require('../structures/Message');
+const ThreadMember = require('../structures/ThreadMember');
+const User = require('../structures/User');
+const { emitDeprecationWarningForUserFetchFlags } = require('../util/Util');
 
 /**
  * Manages API methods for users and stores their cache.
- *
  * @extends {CachedManager}
  */
 class UserManager extends CachedManager {
@@ -20,25 +20,22 @@ class UserManager extends CachedManager {
 
   /**
    * The cache of this manager
-   *
    * @type {Collection<Snowflake, User>}
    * @name UserManager#cache
    */
 
   /**
    * Data that resolves to give a User object. This can be:
-   * - A User object
-   * - A Snowflake
-   * - A Message object (resolves to the message author)
-   * - A GuildMember object
-   * - A ThreadMember object
-   *
+   * * A User object
+   * * A Snowflake
+   * * A Message object (resolves to the message author)
+   * * A GuildMember object
+   * * A ThreadMember object
    * @typedef {User|Snowflake|Message|GuildMember|ThreadMember} UserResolvable
    */
 
   /**
    * The DM between the client's user and a user
-   *
    * @param {Snowflake} userId The user id
    * @returns {?DMChannel}
    * @private
@@ -52,7 +49,6 @@ class UserManager extends CachedManager {
 
   /**
    * Creates a {@link DMChannel} between the client and a user.
-   *
    * @param {UserResolvable} user The UserResolvable to identify
    * @param {BaseFetchOptions} [options] Additional options for this fetch
    * @returns {Promise<DMChannel>}
@@ -71,7 +67,6 @@ class UserManager extends CachedManager {
 
   /**
    * Deletes a {@link DMChannel} (if one exists) between the client and a user. Resolves with the channel if successful.
-   *
    * @param {UserResolvable} user The UserResolvable to identify
    * @returns {Promise<DMChannel>}
    */
@@ -86,7 +81,6 @@ class UserManager extends CachedManager {
 
   /**
    * Obtains a user from Discord, or the user cache if it's already available.
-   *
    * @param {UserResolvable} user The user to fetch
    * @param {BaseFetchOptions} [options] Additional options for this fetch
    * @returns {Promise<User>}
@@ -103,8 +97,20 @@ class UserManager extends CachedManager {
   }
 
   /**
+   * Fetches a user's flags.
+   * @param {UserResolvable} user The UserResolvable to identify
+   * @param {BaseFetchOptions} [options] Additional options for this fetch
+   * @returns {Promise<UserFlagsBitField>}
+   * @deprecated <warn>This method is deprecated and will be removed in the next major version.
+   * Flags may still be retrieved via {@link UserManager#fetch}.</warn>
+   */
+  async fetchFlags(user, options) {
+    emitDeprecationWarningForUserFetchFlags(this.constructor.name);
+    return (await this.fetch(user, options)).flags;
+  }
+
+  /**
    * Sends a message to a user.
-   *
    * @param {UserResolvable} user The UserResolvable to identify
    * @param {string|MessagePayload|MessageCreateOptions} options The options to provide
    * @returns {Promise<Message>}
@@ -115,7 +121,6 @@ class UserManager extends CachedManager {
 
   /**
    * Resolves a {@link UserResolvable} to a {@link User} object.
-   *
    * @param {UserResolvable} user The UserResolvable to identify
    * @returns {?User}
    */
@@ -127,7 +132,6 @@ class UserManager extends CachedManager {
 
   /**
    * Resolves a {@link UserResolvable} to a {@link User} id.
-   *
    * @param {UserResolvable} user The UserResolvable to identify
    * @returns {?Snowflake}
    */
@@ -139,4 +143,4 @@ class UserManager extends CachedManager {
   }
 }
 
-exports.UserManager = UserManager;
+module.exports = UserManager;

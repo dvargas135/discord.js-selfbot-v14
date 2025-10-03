@@ -1,10 +1,10 @@
 'use strict';
 
-const { Typing } = require('../../structures/Typing.js');
-const { Events } = require('../../util/Events.js');
-const { Action } = require('./Action.js');
+const Action = require('./Action');
+const Typing = require('../../structures/Typing');
+const Events = require('../../util/Events');
 
-class TypingStartAction extends Action {
+class TypingStart extends Action {
   handle(data) {
     const channel = this.getChannel({ id: data.channel_id, ...('guild_id' in data && { guild_id: data.guild_id }) });
     if (!channel) return;
@@ -18,7 +18,6 @@ class TypingStartAction extends Action {
     if (user) {
       /**
        * Emitted whenever a user starts typing in a channel.
-       *
        * @event Client#typingStart
        * @param {Typing} typing The typing state
        */
@@ -27,4 +26,4 @@ class TypingStartAction extends Action {
   }
 }
 
-exports.TypingStartAction = TypingStartAction;
+module.exports = TypingStart;

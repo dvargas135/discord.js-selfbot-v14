@@ -1,4 +1,11 @@
-import { codeToHtml } from '@/util/shiki.bundle';
+import { getHighlighterCore } from 'shiki/core';
+import getWasm from 'shiki/wasm';
+
+const highlighter = await getHighlighterCore({
+	themes: [import('shiki/themes/github-light.mjs'), import('shiki/themes/github-dark-dimmed.mjs')],
+	langs: [import('shiki/langs/typescript.mjs'), import('shiki/langs/javascript.mjs')],
+	loadWasm: getWasm,
+});
 
 export async function SyntaxHighlighter({
 	lang,
@@ -9,7 +16,7 @@ export async function SyntaxHighlighter({
 	readonly code: string;
 	readonly lang: string;
 }) {
-	const codeHTML = await codeToHtml(code.trim(), {
+	const codeHTML = highlighter.codeToHtml(code.trim(), {
 		lang,
 		themes: {
 			light: 'github-light',

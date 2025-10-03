@@ -10,13 +10,11 @@ export async function InheritedFromNode({
 	readonly version: string;
 }) {
 	return (
-		<p className="pl-4 break-words">
+		<p className="break-words pl-4">
 			<span className="font-semibold">Inherited from:</span>{' '}
 			<Link
-				className="text-base-blurple-400 hover:text-base-blurple-500 dark:hover:text-base-blurple-300 font-mono"
+				className="font-mono text-blurple hover:text-blurple-500 dark:hover:text-blurple-300"
 				href={`/docs/packages/${packageName}/${version}/${node}`}
-				// @ts-expect-error - unstable_dynamicOnHover is not part of the public types
-				unstable_dynamicOnHover
 			>
 				{node.slice(0, node.indexOf(':'))}
 			</Link>

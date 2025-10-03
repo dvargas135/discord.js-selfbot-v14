@@ -1,16 +1,14 @@
 'use strict';
 
-const { BaseGuildEmoji } = require('./BaseGuildEmoji.js');
+const BaseGuildEmoji = require('./BaseGuildEmoji');
 
 /**
  * Represents an instance of an emoji belonging to a public guild obtained through Discord's preview endpoint.
- *
  * @extends {BaseGuildEmoji}
  */
 class GuildPreviewEmoji extends BaseGuildEmoji {
   /**
    * The public guild this emoji is part of
-   *
    * @type {GuildPreview}
    * @name GuildPreviewEmoji#guild
    */
@@ -20,11 +18,10 @@ class GuildPreviewEmoji extends BaseGuildEmoji {
 
     /**
      * The roles this emoji is active for
-     *
      * @type {Snowflake[]}
      */
     this.roles = data.roles;
   }
 }
 
-exports.GuildPreviewEmoji = GuildPreviewEmoji;
+module.exports = GuildPreviewEmoji;

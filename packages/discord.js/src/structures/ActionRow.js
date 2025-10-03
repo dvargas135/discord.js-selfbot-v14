@@ -1,11 +1,12 @@
 'use strict';
 
-const { createComponent } = require('../util/Components.js');
-const { Component } = require('./Component.js');
+const { deprecate } = require('node:util');
+const { isJSONEncodable } = require('@discordjs/util');
+const Component = require('./Component');
+const { createComponent } = require('../util/Components');
 
 /**
  * Represents an action row
- *
  * @extends {Component}
  */
 class ActionRow extends Component {
@@ -14,7 +15,6 @@ class ActionRow extends Component {
 
     /**
      * The components in this action row
-     *
      * @type {Component[]}
      * @readonly
      */
@@ -22,8 +22,20 @@ class ActionRow extends Component {
   }
 
   /**
+   * Creates a new action row builder from JSON data
+   * @method from
+   * @memberof ActionRow
+   * @param {ActionRowBuilder|ActionRow|APIActionRowComponent} other The other data
+   * @returns {ActionRowBuilder}
+   * @deprecated Use {@link ActionRowBuilder.from | ActionRowBuilder#from} instead.
+   */
+  static from = deprecate(
+    other => new this(isJSONEncodable(other) ? other.toJSON() : other),
+    'ActionRow.from() is deprecated. Use ActionRowBuilder.from() instead.',
+  );
+
+  /**
    * Returns the API-compatible JSON for this component
-   *
    * @returns {APIActionRowComponent}
    */
   toJSON() {
@@ -31,4 +43,4 @@ class ActionRow extends Component {
   }
 }
 
-exports.ActionRow = ActionRow;
+module.exports = ActionRow;

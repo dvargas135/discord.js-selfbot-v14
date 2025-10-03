@@ -1,16 +1,14 @@
 'use strict';
 
-const { Component } = require('./Component.js');
+const Component = require('./Component');
 
 /**
  * Represents a text input component.
- *
  * @extends {Component}
  */
 class TextInputComponent extends Component {
   /**
    * The custom id of this text input
-   *
    * @type {string}
    * @readonly
    */
@@ -20,7 +18,6 @@ class TextInputComponent extends Component {
 
   /**
    * The value for this text input
-   *
    * @type {string}
    * @readonly
    */
@@ -29,4 +26,4 @@ class TextInputComponent extends Component {
   }
 }
 
-exports.TextInputComponent = TextInputComponent;
+module.exports = TextInputComponent;

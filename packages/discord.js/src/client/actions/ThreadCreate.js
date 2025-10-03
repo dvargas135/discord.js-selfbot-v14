@@ -1,7 +1,7 @@
 'use strict';
 
-const { Events } = require('../../util/Events.js');
-const { Action } = require('./Action.js');
+const Action = require('./Action');
+const Events = require('../../util/Events');
 
 class ThreadCreateAction extends Action {
   handle(data) {
@@ -11,16 +11,14 @@ class ThreadCreateAction extends Action {
     if (!existing && thread) {
       /**
        * Emitted whenever a thread is created or when the client user is added to a thread.
-       *
        * @event Client#threadCreate
        * @param {ThreadChannel} thread The thread that was created
        * @param {boolean} newlyCreated Whether the thread was newly created
        */
       client.emit(Events.ThreadCreate, thread, data.newly_created ?? false);
     }
-
     return { thread };
   }
 }
 
-exports.ThreadCreateAction = ThreadCreateAction;
+module.exports = ThreadCreateAction;

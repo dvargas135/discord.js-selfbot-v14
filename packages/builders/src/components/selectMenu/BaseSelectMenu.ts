@@ -1,38 +1,22 @@
-import type { JSONEncodable } from '@discordjs/util';
 import type { APISelectMenuComponent } from 'discord-api-types/v10';
+import { customIdValidator, disabledValidator, minMaxValidator, placeholderValidator } from '../Assertions.js';
 import { ComponentBuilder } from '../Component.js';
 
 /**
  * The base select menu builder that contains common symbols for select menu builders.
  *
- * @typeParam Data - The type of API data that is stored within the builder
+ * @typeParam SelectMenuType - The type of select menu this would be instantiated for.
  */
-export abstract class BaseSelectMenuBuilder<Data extends APISelectMenuComponent>
-	extends ComponentBuilder<Data>
-	implements JSONEncodable<APISelectMenuComponent>
-{
-	/**
-	 * @internal
-	 */
-	protected abstract override readonly data: Partial<
-		Pick<Data, 'custom_id' | 'disabled' | 'id' | 'max_values' | 'min_values' | 'placeholder' | 'required'>
-	>;
-
+export abstract class BaseSelectMenuBuilder<
+	SelectMenuType extends APISelectMenuComponent,
+> extends ComponentBuilder<SelectMenuType> {
 	/**
 	 * Sets the placeholder for this select menu.
 	 *
 	 * @param placeholder - The placeholder to use
 	 */
 	public setPlaceholder(placeholder: string) {
-		this.data.placeholder = placeholder;
-		return this;
-	}
-
-	/**
-	 * Clears the placeholder for this select menu.
-	 */
-	public clearPlaceholder() {
-		this.data.placeholder = undefined;
+		this.data.placeholder = placeholderValidator.parse(placeholder);
 		return this;
 	}
 
@@ -42,7 +26,7 @@ export abstract class BaseSelectMenuBuilder<Data extends APISelectMenuComponent>
 	 * @param minValues - The minimum values that must be selected
 	 */
 	public setMinValues(minValues: number) {
-		this.data.min_values = minValues;
+		this.data.min_values = minMaxValidator.parse(minValues);
 		return this;
 	}
 
@@ -52,7 +36,7 @@ export abstract class BaseSelectMenuBuilder<Data extends APISelectMenuComponent>
 	 * @param maxValues - The maximum values that must be selected
 	 */
 	public setMaxValues(maxValues: number) {
-		this.data.max_values = maxValues;
+		this.data.max_values = minMaxValidator.parse(maxValues);
 		return this;
 	}
 
@@ -62,7 +46,7 @@ export abstract class BaseSelectMenuBuilder<Data extends APISelectMenuComponent>
 	 * @param customId - The custom id to use
 	 */
 	public setCustomId(customId: string) {
-		this.data.custom_id = customId;
+		this.data.custom_id = customIdValidator.parse(customId);
 		return this;
 	}
 
@@ -72,18 +56,17 @@ export abstract class BaseSelectMenuBuilder<Data extends APISelectMenuComponent>
 	 * @param disabled - Whether this select menu is disabled
 	 */
 	public setDisabled(disabled = true) {
-		this.data.disabled = disabled;
+		this.data.disabled = disabledValidator.parse(disabled);
 		return this;
 	}
 
 	/**
-	 * Sets whether this select menu is required.
-	 *
-	 * @remarks Only for use in modals.
-	 * @param required - Whether this string select menu is required
+	 * {@inheritDoc ComponentBuilder.toJSON}
 	 */
-	public setRequired(required = true) {
-		this.data.required = required;
-		return this;
+	public toJSON(): SelectMenuType {
+		customIdValidator.parse(this.data.custom_id);
+		return {
+			...this.data,
+		} as SelectMenuType;
 	}
 }

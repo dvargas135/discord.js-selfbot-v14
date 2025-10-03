@@ -14,7 +14,7 @@ console.log(
 const parser: ApiExtractorCommandLine = new ApiExtractorCommandLine();
 
 // eslint-disable-next-line promise/prefer-await-to-callbacks
-parser.executeAsync().catch((error) => {
+parser.execute().catch((error) => {
 	console.error(colors.red(`An unexpected error occurred:`), error);
 	process.exit(1);
 });

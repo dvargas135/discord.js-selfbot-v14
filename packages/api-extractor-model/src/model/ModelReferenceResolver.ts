@@ -73,8 +73,7 @@ export class ModelReferenceResolver {
 			}
 		}
 
-		// Remove the leading / in the import path
-		const importPath: string = (declarationReference.importPath || '').replace(/^\//, '');
+		const importPath: string = declarationReference.importPath ?? '';
 
 		const foundEntryPoints: readonly ApiEntryPoint[] = apiPackage.findEntryPointsByPath(importPath);
 		if (foundEntryPoints.length < 1) {

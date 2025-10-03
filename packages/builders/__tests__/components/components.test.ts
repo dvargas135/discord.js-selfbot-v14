@@ -3,22 +3,22 @@ import {
 	ComponentType,
 	TextInputStyle,
 	type APIButtonComponent,
+	type APIMessageActionRowComponent,
 	type APISelectMenuComponent,
 	type APITextInputComponent,
 	type APIActionRowComponent,
-	type APIComponentInMessageActionRow,
 } from 'discord-api-types/v10';
 import { describe, test, expect } from 'vitest';
 import {
 	ActionRowBuilder,
+	ButtonBuilder,
 	createComponentBuilder,
-	CustomIdButtonBuilder,
 	StringSelectMenuBuilder,
 	TextInputBuilder,
 } from '../../src/index.js';
 
 describe('createComponentBuilder', () => {
-	test.each([StringSelectMenuBuilder, TextInputBuilder])(
+	test.each([ButtonBuilder, StringSelectMenuBuilder, TextInputBuilder])(
 		'passing an instance of %j should return itself',
 		(Builder) => {
 			const builder = new Builder();
@@ -27,7 +27,7 @@ describe('createComponentBuilder', () => {
 	);
 
 	test('GIVEN an action row component THEN returns a ActionRowBuilder', () => {
-		const actionRow: APIActionRowComponent<APIComponentInMessageActionRow> = {
+		const actionRow: APIActionRowComponent<APIMessageActionRowComponent> = {
 			components: [],
 			type: ComponentType.ActionRow,
 		};
@@ -42,7 +42,7 @@ describe('createComponentBuilder', () => {
 			type: ComponentType.Button,
 		};
 
-		expect(createComponentBuilder(button)).toBeInstanceOf(CustomIdButtonBuilder);
+		expect(createComponentBuilder(button)).toBeInstanceOf(ButtonBuilder);
 	});
 
 	test('GIVEN a select menu component THEN returns a StringSelectMenuBuilder', () => {

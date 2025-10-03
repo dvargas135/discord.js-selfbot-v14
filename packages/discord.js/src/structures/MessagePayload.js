@@ -1,12 +1,15 @@
 'use strict';
 
 const { Buffer } = require('node:buffer');
-const { isJSONEncodable } = require('@discordjs/util');
+const { lazy, isJSONEncodable } = require('@discordjs/util');
 const { DiscordSnowflake } = require('@sapphire/snowflake');
-const { DiscordjsError, DiscordjsRangeError, ErrorCodes } = require('../errors/index.js');
-const { resolveFile } = require('../util/DataResolver.js');
-const { MessageFlagsBitField } = require('../util/MessageFlagsBitField.js');
-const { findName, verifyString, resolvePartialEmoji } = require('../util/Util.js');
+const { MessageFlags, MessageReferenceType } = require('discord-api-types/v10');
+const { DiscordjsError, DiscordjsRangeError, ErrorCodes } = require('../errors');
+const { resolveFile } = require('../util/DataResolver');
+const MessageFlagsBitField = require('../util/MessageFlagsBitField');
+const { basename, verifyString, resolvePartialEmoji } = require('../util/Util');
+
+const getBaseInteraction = lazy(() => require('./BaseInteraction'));
 
 /**
  * Represents a message to be sent to the API.
@@ -19,28 +22,24 @@ class MessagePayload {
   constructor(target, options) {
     /**
      * The target for this message to be sent to
-     *
      * @type {MessageTarget}
      */
     this.target = target;
 
     /**
      * The payload of this message.
-     *
      * @type {MessagePayloadOption}
      */
     this.options = options;
 
     /**
      * Body sendable to the API
-     *
      * @type {?APIMessage}
      */
     this.body = null;
 
     /**
      * Files sendable to the API
-     *
      * @type {?RawFile[]}
      */
     this.files = null;
@@ -48,53 +47,60 @@ class MessagePayload {
 
   /**
    * Whether or not the target is a {@link Webhook} or a {@link WebhookClient}
-   *
    * @type {boolean}
    * @readonly
    */
   get isWebhook() {
-    const { Webhook } = require('./Webhook.js');
-    const { WebhookClient } = require('../client/WebhookClient.js');
+    const Webhook = require('./Webhook');
+    const WebhookClient = require('../client/WebhookClient');
     return this.target instanceof Webhook || this.target instanceof WebhookClient;
   }
 
   /**
    * Whether or not the target is a {@link User}
-   *
    * @type {boolean}
    * @readonly
    */
   get isUser() {
-    const { User } = require('./User.js');
-    const { GuildMember } = require('./GuildMember.js');
+    const User = require('./User');
+    const { GuildMember } = require('./GuildMember');
     return this.target instanceof User || this.target instanceof GuildMember;
   }
 
   /**
    * Whether or not the target is a {@link Message}
-   *
    * @type {boolean}
    * @readonly
    */
   get isMessage() {
-    const { Message } = require('./Message.js');
+    const { Message } = require('./Message');
     return this.target instanceof Message;
   }
 
   /**
    * Whether or not the target is a {@link MessageManager}
-   *
    * @type {boolean}
    * @readonly
    */
   get isMessageManager() {
-    const { MessageManager } = require('../managers/MessageManager.js');
+    const MessageManager = require('../managers/MessageManager');
     return this.target instanceof MessageManager;
   }
 
   /**
+   * Whether or not the target is an {@link BaseInteraction} or an {@link InteractionWebhook}
+   * @type {boolean}
+   * @readonly
+   * @deprecated This will no longer serve a purpose in the next major version.
+   */
+  get isInteraction() {
+    const BaseInteraction = getBaseInteraction();
+    const InteractionWebhook = require('./InteractionWebhook');
+    return this.target instanceof BaseInteraction || this.target instanceof InteractionWebhook;
+  }
+
+  /**
    * Makes the content of this message.
-   *
    * @returns {?string}
    */
   makeContent() {
@@ -110,11 +116,11 @@ class MessagePayload {
 
   /**
    * Resolves the body.
-   *
    * @returns {MessagePayload}
    */
   resolveBody() {
     if (this.body) return this;
+    const isInteraction = this.isInteraction;
     const isWebhook = this.isWebhook;
 
     const content = this.makeContent();
@@ -164,6 +170,10 @@ class MessagePayload {
       flags = new MessageFlagsBitField(this.options.flags).bitfield;
     }
 
+    if (isInteraction && this.options.ephemeral) {
+      flags |= MessageFlags.Ephemeral;
+    }
+
     let allowedMentions =
       this.options.allowedMentions === undefined
         ? this.target.client.options.allowedMentions
@@ -175,16 +185,29 @@ class MessagePayload {
     }
 
     let message_reference;
-    if (this.options.messageReference) {
-      const reference = this.options.messageReference;
-
-      if (reference.messageId) {
+    if (typeof this.options.reply === 'object') {
+      const reference = this.options.reply.messageReference;
+      const message_id = this.isMessage ? (reference.id ?? reference) : this.target.messages.resolveId(reference);
+      if (message_id) {
         message_reference = {
-          message_id: reference.messageId,
-          channel_id: reference.channelId,
-          guild_id: reference.guildId,
-          type: reference.type,
-          fail_if_not_exists: reference.failIfNotExists ?? this.target.client.options.failIfNotExists,
+          message_id,
+          fail_if_not_exists: this.options.reply.failIfNotExists ?? this.target.client.options.failIfNotExists,
+        };
+      }
+    }
+
+    if (typeof this.options.forward === 'object') {
+      const reference = this.options.forward.message;
+      const channel_id = reference.channelId ?? this.target.client.channels.resolveId(this.options.forward.channel);
+      const guild_id = reference.guildId ?? this.target.client.guilds.resolveId(this.options.forward.guild);
+      const message_id = this.target.messages.resolveId(reference);
+      if (message_id) {
+        if (!channel_id) throw new DiscordjsError(ErrorCodes.InvalidType, 'channelId', 'TextBasedChannelResolvable');
+        message_reference = {
+          type: MessageReferenceType.Forward,
+          message_id,
+          channel_id,
+          guild_id: guild_id ?? undefined,
         };
       }
     }
@@ -192,9 +215,6 @@ class MessagePayload {
     const attachments = this.options.files?.map((file, index) => ({
       id: index.toString(),
       description: file.description,
-      title: file.title,
-      waveform: file.waveform,
-      duration_secs: file.duration,
     }));
     if (Array.isArray(this.options.attachments)) {
       this.options.attachments.push(...(attachments ?? []));
@@ -204,19 +224,17 @@ class MessagePayload {
 
     let poll;
     if (this.options.poll) {
-      poll = isJSONEncodable(this.options.poll)
-        ? this.options.poll.toJSON()
-        : {
-            question: {
-              text: this.options.poll.question.text,
-            },
-            answers: this.options.poll.answers.map(answer => ({
-              poll_media: { text: answer.text, emoji: resolvePartialEmoji(answer.emoji) },
-            })),
-            duration: this.options.poll.duration,
-            allow_multiselect: this.options.poll.allowMultiselect,
-            layout_type: this.options.poll.layoutType,
-          };
+      poll = {
+        question: {
+          text: this.options.poll.question.text,
+        },
+        answers: this.options.poll.answers.map(answer => ({
+          poll_media: { text: answer.text, emoji: resolvePartialEmoji(answer.emoji) },
+        })),
+        duration: this.options.poll.duration,
+        allow_multiselect: this.options.poll.allowMultiselect,
+        layout_type: this.options.poll.layoutType,
+      };
     }
 
     this.body = {
@@ -247,7 +265,6 @@ class MessagePayload {
 
   /**
    * Resolves files.
-   *
    * @returns {Promise<MessagePayload>}
    */
   async resolveFiles() {
@@ -259,13 +276,24 @@ class MessagePayload {
 
   /**
    * Resolves a single file into an object sendable to the API.
-   *
    * @param {AttachmentPayload|BufferResolvable|Stream} fileLike Something that could be resolved to a file
    * @returns {Promise<RawFile>}
    */
   static async resolveFile(fileLike) {
     let attachment;
     let name;
+
+    const findName = thing => {
+      if (typeof thing === 'string') {
+        return basename(thing);
+      }
+
+      if (thing.path) {
+        return basename(thing.path);
+      }
+
+      return 'file.jpg';
+    };
 
     const ownAttachment =
       typeof fileLike === 'string' || fileLike instanceof Buffer || typeof fileLike.pipe === 'function';
@@ -283,7 +311,6 @@ class MessagePayload {
 
   /**
    * Creates a {@link MessagePayload} from user-level arguments.
-   *
    * @param {MessageTarget} target Target to send to
    * @param {string|MessagePayloadOption} options Options or content to use
    * @param {MessagePayloadOption} [extra={}] Extra options to add onto specified options
@@ -297,18 +324,16 @@ class MessagePayload {
   }
 }
 
-exports.MessagePayload = MessagePayload;
+module.exports = MessagePayload;
 
 /**
  * A target for a message.
- *
- * @typedef {TextBasedChannels|ChannelManager|Webhook|WebhookClient|BaseInteraction|InteractionWebhook|
+ * @typedef {TextBasedChannels|User|GuildMember|Webhook|WebhookClient|BaseInteraction|InteractionWebhook|
  * Message|MessageManager} MessageTarget
  */
 
 /**
  * A possible payload option.
- *
  * @typedef {MessageCreateOptions|MessageEditOptions|WebhookMessageCreateOptions|WebhookMessageEditOptions|
  * InteractionReplyOptions|InteractionUpdateOptions} MessagePayloadOption
  */

@@ -1,11 +1,10 @@
 'use strict';
 
 const { Collection } = require('@discordjs/collection');
-const { MessageComponentInteraction } = require('./MessageComponentInteraction.js');
+const MessageComponentInteraction = require('./MessageComponentInteraction');
 
 /**
  * Represents a {@link ComponentType.ChannelSelect} select menu interaction.
- *
  * @extends {MessageComponentInteraction}
  */
 class ChannelSelectMenuInteraction extends MessageComponentInteraction {
@@ -15,14 +14,12 @@ class ChannelSelectMenuInteraction extends MessageComponentInteraction {
 
     /**
      * An array of the selected channel ids
-     *
      * @type {Snowflake[]}
      */
     this.values = values ?? [];
 
     /**
      * Collection of the selected channels
-     *
      * @type {Collection<Snowflake, BaseChannel|APIChannel>}
      */
     this.channels = new Collection();
@@ -33,4 +30,4 @@ class ChannelSelectMenuInteraction extends MessageComponentInteraction {
   }
 }
 
-exports.ChannelSelectMenuInteraction = ChannelSelectMenuInteraction;
+module.exports = ChannelSelectMenuInteraction;

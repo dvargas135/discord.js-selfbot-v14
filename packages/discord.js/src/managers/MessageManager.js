@@ -1,18 +1,20 @@
 'use strict';
 
+const process = require('node:process');
 const { Collection } = require('@discordjs/collection');
 const { makeURLSearchParams } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v10');
-const { DiscordjsTypeError, ErrorCodes } = require('../errors/index.js');
-const { Message } = require('../structures/Message.js');
-const { MessagePayload } = require('../structures/MessagePayload.js');
-const { MakeCacheOverrideSymbol } = require('../util/Symbols.js');
-const { resolvePartialEmoji } = require('../util/Util.js');
-const { CachedManager } = require('./CachedManager.js');
+const CachedManager = require('./CachedManager');
+const { DiscordjsTypeError, ErrorCodes } = require('../errors');
+const { Message } = require('../structures/Message');
+const MessagePayload = require('../structures/MessagePayload');
+const { MakeCacheOverrideSymbol } = require('../util/Symbols');
+const { resolvePartialEmoji } = require('../util/Util');
+
+let deprecationEmittedForFetchPinned = false;
 
 /**
  * Manages API methods for Messages and holds their cache.
- *
  * @extends {CachedManager}
  * @abstract
  */
@@ -24,7 +26,6 @@ class MessageManager extends CachedManager {
 
     /**
      * The channel that the messages belong to
-     *
      * @type {TextBasedChannels}
      */
     this.channel = channel;
@@ -32,7 +33,6 @@ class MessageManager extends CachedManager {
 
   /**
    * The cache of Messages
-   *
    * @type {Collection<Snowflake, Message>}
    * @name MessageManager#cache
    */
@@ -43,15 +43,13 @@ class MessageManager extends CachedManager {
 
   /**
    * Data that can be resolved to a Message object. This can be:
-   * - A Message
-   * - A Snowflake
-   *
+   * * A Message
+   * * A Snowflake
    * @typedef {Message|Snowflake} MessageResolvable
    */
 
   /**
    * Options used to fetch a message.
-   *
    * @typedef {BaseFetchOptions} FetchMessageOptions
    * @property {MessageResolvable} message The message to fetch
    */
@@ -59,7 +57,6 @@ class MessageManager extends CachedManager {
   /**
    * Options used to fetch multiple messages.
    * <info>The `before`, `after`, and `around` parameters are mutually exclusive.</info>
-   *
    * @typedef {Object} FetchMessagesOptions
    * @property {number} [limit] The maximum number of messages to return
    * @property {Snowflake} [before] Consider only messages before this id
@@ -72,7 +69,6 @@ class MessageManager extends CachedManager {
    * Fetches message(s) from a channel.
    * <info>The returned Collection does not contain reaction users of the messages if they were not cached.
    * Those need to be fetched separately in such a case.</info>
-   *
    * @param {MessageResolvable|FetchMessageOptions|FetchMessagesOptions} [options] Options for fetching message(s)
    * @returns {Promise<Message|Collection<Snowflake, Message>>}
    * @example
@@ -97,7 +93,7 @@ class MessageManager extends CachedManager {
    *          message.author.id === '84484653687267328').size} messages`))
    *   .catch(console.error);
    */
-  async fetch(options) {
+  fetch(options) {
     if (!options) return this._fetchMany();
     const { message, cache, force } = options;
     const resolvedMessage = this.resolveId(message ?? options);
@@ -183,8 +179,31 @@ class MessageManager extends CachedManager {
   }
 
   /**
+   * Fetches the pinned messages of this channel and returns a collection of them.
+   * <info>The returned Collection does not contain any reaction data of the messages.
+   * Those need to be fetched separately.</info>
+   * @param {boolean} [cache=true] Whether to cache the message(s)
+   * @deprecated Use {@link MessageManager#fetchPins} instead.
+   * @returns {Promise<Collection<Snowflake, Message>>}
+   */
+  async fetchPinned(cache = true) {
+    if (!deprecationEmittedForFetchPinned) {
+      process.emitWarning(
+        'The MessageManager#fetchPinned() method is deprecated. Use MessageManager#fetchPins() instead.',
+        'DeprecationWarning',
+      );
+
+      deprecationEmittedForFetchPinned = true;
+    }
+
+    const data = await this.client.rest.get(Routes.channelPins(this.channel.id));
+    const messages = new Collection();
+    for (const message of data) messages.set(message.id, this._add(message, cache));
+    return messages;
+  }
+
+  /**
    * Resolves a {@link MessageResolvable} to a {@link Message} object.
-   *
    * @method resolve
    * @memberof MessageManager
    * @instance
@@ -194,7 +213,6 @@ class MessageManager extends CachedManager {
 
   /**
    * Resolves a {@link MessageResolvable} to a {@link Message} id.
-   *
    * @method resolveId
    * @memberof MessageManager
    * @instance
@@ -204,14 +222,12 @@ class MessageManager extends CachedManager {
 
   /**
    * Data used to reference an attachment.
-   *
    * @typedef {Object} MessageEditAttachmentData
    * @property {Snowflake} id The id of the attachment
    */
 
   /**
    * Options that can be passed to edit a message.
-   *
    * @typedef {BaseMessageOptions} MessageEditOptions
    * @property {Array<Attachment|MessageEditAttachmentData>} [attachments] An array of attachments to keep.
    * All attachments will be kept if omitted
@@ -221,7 +237,6 @@ class MessageManager extends CachedManager {
 
   /**
    * Edits a message, even if it's not cached.
-   *
    * @param {MessageResolvable} message The message to edit
    * @param {string|MessageEditOptions|MessagePayload} options The options to edit the message
    * @returns {Promise<Message>}
@@ -237,83 +252,90 @@ class MessageManager extends CachedManager {
     )
       .resolveBody()
       .resolveFiles();
-    const data = await this.client.rest.patch(Routes.channelMessage(this.channel.id, messageId), { body, files });
+    const d = await this.client.rest.patch(Routes.channelMessage(this.channel.id, messageId), { body, files });
 
     const existing = this.cache.get(messageId);
     if (existing) {
       const clone = existing._clone();
-      clone._patch(data);
+      clone._patch(d);
       return clone;
     }
+    return this._add(d);
+  }
 
-    return this._add(data);
+  /**
+   * Publishes a message in an announcement channel to all channels following it, even if it's not cached.
+   * @param {MessageResolvable} message The message to publish
+   * @returns {Promise<Message>}
+   */
+  async crosspost(message) {
+    message = this.resolveId(message);
+    if (!message) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'message', 'MessageResolvable');
+
+    const data = await this.client.rest.post(Routes.channelMessageCrosspost(this.channel.id, message));
+    return this.cache.get(data.id) ?? this._add(data);
   }
 
   /**
    * Pins a message to the channel's pinned messages, even if it's not cached.
-   *
    * @param {MessageResolvable} message The message to pin
    * @param {string} [reason] Reason for pinning
    * @returns {Promise<void>}
    */
   async pin(message, reason) {
-    const messageId = this.resolveId(message);
-    if (!messageId) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'message', 'MessageResolvable');
+    message = this.resolveId(message);
+    if (!message) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'message', 'MessageResolvable');
 
-    await this.client.rest.put(Routes.channelMessagesPin(this.channel.id, messageId), { reason });
+    await this.client.rest.put(Routes.channelMessagesPin(this.channel.id, message), { reason });
   }
 
   /**
    * Unpins a message from the channel's pinned messages, even if it's not cached.
-   *
    * @param {MessageResolvable} message The message to unpin
    * @param {string} [reason] Reason for unpinning
    * @returns {Promise<void>}
    */
   async unpin(message, reason) {
-    const messageId = this.resolveId(message);
-    if (!messageId) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'message', 'MessageResolvable');
+    message = this.resolveId(message);
+    if (!message) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'message', 'MessageResolvable');
 
-    await this.client.rest.delete(Routes.channelMessagesPin(this.channel.id, messageId), { reason });
+    await this.client.rest.delete(Routes.channelMessagesPin(this.channel.id, message), { reason });
   }
 
   /**
    * Adds a reaction to a message, even if it's not cached.
-   *
    * @param {MessageResolvable} message The message to react to
    * @param {EmojiIdentifierResolvable} emoji The emoji to react with
    * @returns {Promise<void>}
    */
   async react(message, emoji) {
-    const messageId = this.resolveId(message);
-    if (!messageId) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'message', 'MessageResolvable');
+    message = this.resolveId(message);
+    if (!message) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'message', 'MessageResolvable');
 
-    const resolvedEmoji = resolvePartialEmoji(emoji);
-    if (!resolvedEmoji) throw new DiscordjsTypeError(ErrorCodes.EmojiType, 'emoji', 'EmojiIdentifierResolvable');
+    emoji = resolvePartialEmoji(emoji);
+    if (!emoji) throw new DiscordjsTypeError(ErrorCodes.EmojiType, 'emoji', 'EmojiIdentifierResolvable');
 
-    const emojiId = resolvedEmoji.id
-      ? `${resolvedEmoji.animated ? 'a:' : ''}${resolvedEmoji.name}:${resolvedEmoji.id}`
-      : encodeURIComponent(resolvedEmoji.name);
+    const emojiId = emoji.id
+      ? `${emoji.animated ? 'a:' : ''}${emoji.name}:${emoji.id}`
+      : encodeURIComponent(emoji.name);
 
-    await this.client.rest.put(Routes.channelMessageOwnReaction(this.channel.id, messageId, emojiId));
+    await this.client.rest.put(Routes.channelMessageOwnReaction(this.channel.id, message, emojiId));
   }
 
   /**
    * Deletes a message, even if it's not cached.
-   *
    * @param {MessageResolvable} message The message to delete
    * @returns {Promise<void>}
    */
   async delete(message) {
-    const messageId = this.resolveId(message);
-    if (!messageId) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'message', 'MessageResolvable');
+    message = this.resolveId(message);
+    if (!message) throw new DiscordjsTypeError(ErrorCodes.InvalidType, 'message', 'MessageResolvable');
 
-    await this.client.rest.delete(Routes.channelMessage(this.channel.id, messageId));
+    await this.client.rest.delete(Routes.channelMessage(this.channel.id, message));
   }
 
   /**
    * Ends a poll.
-   *
    * @param {Snowflake} messageId The id of the message
    * @returns {Promise<Message>}
    */
@@ -324,7 +346,6 @@ class MessageManager extends CachedManager {
 
   /**
    * Options used for fetching voters of an answer in a poll.
-   *
    * @typedef {BaseFetchPollAnswerVotersOptions} FetchPollAnswerVotersOptions
    * @param {Snowflake} messageId The id of the message
    * @param {number} answerId The id of the answer
@@ -332,7 +353,6 @@ class MessageManager extends CachedManager {
 
   /**
    * Fetches the users that voted for a poll answer.
-   *
    * @param {FetchPollAnswerVotersOptions} options The options for fetching the poll answer voters
    * @returns {Promise<Collection<Snowflake, User>>}
    */
@@ -345,4 +365,4 @@ class MessageManager extends CachedManager {
   }
 }
 
-exports.MessageManager = MessageManager;
+module.exports = MessageManager;

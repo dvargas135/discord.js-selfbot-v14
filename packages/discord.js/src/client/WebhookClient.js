@@ -1,20 +1,18 @@
 'use strict';
 
-const { DiscordjsError, ErrorCodes } = require('../errors/index.js');
-const { Webhook } = require('../structures/Webhook.js');
-const { parseWebhookURL } = require('../util/Util.js');
-const { BaseClient } = require('./BaseClient.js');
+const BaseClient = require('./BaseClient');
+const { DiscordjsError, ErrorCodes } = require('../errors');
+const Webhook = require('../structures/Webhook');
+const { parseWebhookURL } = require('../util/Util');
 
 /**
  * The webhook client.
- *
  * @implements {Webhook}
  * @extends {BaseClient}
  */
 class WebhookClient extends BaseClient {
   /**
    * Represents the credentials used for a webhook in the form of its id and token.
-   *
    * @typedef {Object} WebhookClientDataIdWithToken
    * @property {Snowflake} id The webhook's id
    * @property {string} token The webhook's token
@@ -22,20 +20,17 @@ class WebhookClient extends BaseClient {
 
   /**
    * Represents the credentials used for a webhook in the form of a URL.
-   *
    * @typedef {Object} WebhookClientDataURL
    * @property {string} url The full URL for the webhook
    */
 
   /**
    * Represents the credentials used for a webhook.
-   *
    * @typedef {WebhookClientDataIdWithToken|WebhookClientDataURL} WebhookClientData
    */
 
   /**
    * Options for a webhook client.
-   *
    * @typedef {Object} WebhookClientOptions
    * @property {MessageMentionOptions} [allowedMentions] Default value for {@link BaseMessageOptions#allowedMentions}
    * @property {RESTOptions} [rest] Options for the REST manager
@@ -65,55 +60,44 @@ class WebhookClient extends BaseClient {
 
   /**
    * The options the webhook client was instantiated with.
-   *
    * @type {WebhookClientOptions}
    * @name WebhookClient#options
    */
 
   // These are here only for documentation purposes - they are implemented by Webhook
-
-  /* eslint-disable jsdoc/check-param-names, getter-return */
+  /* eslint-disable no-empty-function, valid-jsdoc */
   /**
    * Sends a message with this webhook.
-   *
    * @param {string|MessagePayload|WebhookMessageCreateOptions} options The content for the reply
    * @returns {Promise<APIMessage>}
    */
-  async send() {}
+  send() {}
 
   /**
    * Gets a message that was sent by this webhook.
-   *
    * @param {Snowflake} message The id of the message to fetch
-   * @param {WebhookFetchMessageOptions} [options] The options to provide to fetch the message.
+   * @param {WebhookFetchMessageOptions} [options={}] The options to provide to fetch the message.
    * @returns {Promise<APIMessage>} Returns the message sent by this webhook
    */
-  async fetchMessage() {}
+  fetchMessage() {}
 
   /**
    * Edits a message that was sent by this webhook.
-   *
    * @param {MessageResolvable} message The message to edit
    * @param {string|MessagePayload|WebhookMessageEditOptions} options The options to provide
    * @returns {Promise<APIMessage>} Returns the message edited by this webhook
    */
-  async editMessage() {}
+  editMessage() {}
 
   sendSlackMessage() {}
-
   edit() {}
-
   delete() {}
-
   deleteMessage() {}
-
   get createdTimestamp() {}
-
   get createdAt() {}
-
   get url() {}
 }
 
 Webhook.applyToClass(WebhookClient);
 
-exports.WebhookClient = WebhookClient;
+module.exports = WebhookClient;

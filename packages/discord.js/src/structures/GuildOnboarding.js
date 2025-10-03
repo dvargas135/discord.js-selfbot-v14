@@ -1,12 +1,11 @@
 'use strict';
 
 const { Collection } = require('@discordjs/collection');
-const { Base } = require('./Base.js');
-const { GuildOnboardingPrompt } = require('./GuildOnboardingPrompt.js');
+const Base = require('./Base');
+const { GuildOnboardingPrompt } = require('./GuildOnboardingPrompt');
 
 /**
  * Represents the onboarding data of a guild.
- *
  * @extends {Base}
  */
 class GuildOnboarding extends Base {
@@ -15,7 +14,6 @@ class GuildOnboarding extends Base {
 
     /**
      * The id of the guild this onboarding data is for
-     *
      * @type {Snowflake}
      */
     this.guildId = data.guild_id;
@@ -24,7 +22,6 @@ class GuildOnboarding extends Base {
 
     /**
      * The prompts shown during onboarding and in customize community
-     *
      * @type {Collection<Snowflake, GuildOnboardingPrompt>}
      */
     this.prompts = data.prompts.reduce(
@@ -34,7 +31,6 @@ class GuildOnboarding extends Base {
 
     /**
      * The ids of the channels that new members get opted into automatically
-     *
      * @type {Collection<Snowflake, GuildChannel>}
      */
     this.defaultChannels = data.default_channel_ids.reduce(
@@ -44,14 +40,12 @@ class GuildOnboarding extends Base {
 
     /**
      * Whether onboarding is enabled
-     *
      * @type {boolean}
      */
     this.enabled = data.enabled;
 
     /**
      * The mode of this onboarding
-     *
      * @type {GuildOnboardingMode}
      */
     this.mode = data.mode;
@@ -59,7 +53,6 @@ class GuildOnboarding extends Base {
 
   /**
    * The guild this onboarding is from
-   *
    * @type {Guild}
    * @readonly
    */

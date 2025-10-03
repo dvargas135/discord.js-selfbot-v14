@@ -1,7 +1,6 @@
-/* eslint-disable no-use-before-define */
 'use strict';
 
-// eslint-disable-next-line import-x/order
+const { ComponentBuilder } = require('@discordjs/builders');
 const { ComponentType } = require('discord-api-types/v10');
 
 /**
@@ -16,25 +15,6 @@ const { ComponentType } = require('discord-api-types/v10');
  */
 
 /**
- * @typedef {Object} ModalComponentData
- * @property {string} title The title of the modal
- * @property {string} customId The custom id of the modal
- * @property {Array<TextDisplayComponentData|LabelData>} components The components within this modal
- */
-
-/**
- * @typedef {StringSelectMenuComponentData|TextInputComponentData|UserSelectMenuComponentData|
- * RoleSelectMenuComponentData|MentionableSelectMenuComponentData|ChannelSelectMenuComponentData} ComponentInLabelData
- */
-
-/**
- * @typedef {BaseComponentData} LabelData
- * @property {string} label The label to use
- * @property {string} [description] The optional description for the label
- * @property {ComponentInLabelData} component The component within the label
- */
-
-/**
  * @typedef {BaseComponentData} ButtonComponentData
  * @property {ButtonStyle} style The style of the button
  * @property {boolean} [disabled] Whether this button is disabled
@@ -45,43 +25,7 @@ const { ComponentType } = require('discord-api-types/v10');
  */
 
 /**
- * @typedef {BaseComponentData} BaseSelectMenuComponentData
- * @property {string} customId The custom id of the select menu
- * @property {boolean} [disabled] Whether the select menu is disabled or not
- * @property {number} [maxValues] The maximum amount of options that can be selected
- * @property {number} [minValues] The minimum amount of options that can be selected
- * @property {string} [placeholder] The placeholder of the select menu
- * @property {boolean} [required] Whether this component is required in modals
- */
-
-/**
- * @typedef {BaseSelectMenuComponentData} StringSelectMenuComponentData
- * @property {SelectMenuComponentOptionData[]} [options] The options in this select menu
- */
-
-/**
- * @typedef {BaseSelectMenuComponentData} UserSelectMenuComponentData
- * @property {APISelectMenuDefaultValue[]} [defaultValues] The default selected values in this select menu
- */
-
-/**
- * @typedef {BaseSelectMenuComponentData} RoleSelectMenuComponentData
- * @property {APISelectMenuDefaultValue[]} [defaultValues] The default selected values in this select menu
- */
-
-/**
- * @typedef {BaseSelectMenuComponentData} MentionableSelectMenuComponentData
- * @property {APISelectMenuDefaultValue[]} [defaultValues] The default selected values in this select menu
- */
-
-/**
- * @typedef {BaseSelectMenuComponentData} ChannelSelectMenuComponentData
- * @property {APISelectMenuDefaultValue[]} [defaultValues] The default selected values in this select menu
- * @property {ChannelType[]} [channelTypes] The types of channels that can be selected
- */
-
-/**
- * @typedef {Object} SelectMenuComponentOptionData
+ * @typedef {object} SelectMenuComponentOptionData
  * @property {string} label The label of the option
  * @property {string} value The value of the option
  * @property {string} [description] The description of the option
@@ -107,6 +51,7 @@ const { ComponentType } = require('discord-api-types/v10');
  * @typedef {BaseComponentData} TextInputComponentData
  * @property {string} customId The custom id of the text input
  * @property {TextInputStyle} style The style of the text input
+ * @property {string} label The text that appears on top of the text input field
  * @property {number} [minLength] The minimum number of characters that can be entered in the text input
  * @property {number} [maxLength] The maximum number of characters that can be entered in the text input
  * @property {boolean} [required] Whether or not the text input is required or not
@@ -180,24 +125,37 @@ const { ComponentType } = require('discord-api-types/v10');
  */
 
 /**
+ * Any emoji data that can be used within a button
+ * @typedef {APIMessageComponentEmoji|string} ComponentEmojiResolvable
+ */
+
+/**
  * @typedef {ActionRow|ContainerComponent|FileComponent|MediaGalleryComponent|
  * SectionComponent|SeparatorComponent|TextDisplayComponent} MessageTopLevelComponent
  */
 
 /**
  * Transforms API data into a component
- *
  * @param {APIMessageComponent|Component} data The data to create the component from
  * @returns {Component}
  * @ignore
  */
 function createComponent(data) {
-  return data instanceof Component ? data : new (ComponentTypeToClass[data.type] ?? Component)(data);
+  return data instanceof Component ? data : new (ComponentTypeToComponent[data.type] ?? Component)(data);
+}
+
+/**
+ * Transforms API data into a component builder
+ * @param {APIMessageComponent|ComponentBuilder} data The data to create the component from
+ * @returns {ComponentBuilder}
+ * @ignore
+ */
+function createComponentBuilder(data) {
+  return data instanceof ComponentBuilder ? data : new (ComponentTypeToBuilder[data.type] ?? ComponentBuilder)(data);
 }
 
 /**
  * Extracts all interactive components from the component tree
- *
  * @param {Component|APIMessageComponent} component The component to find all interactive components in
  * @returns {Array<Component|APIMessageComponent>}
  * @ignore
@@ -217,7 +175,6 @@ function extractInteractiveComponents(component) {
 
 /**
  * Finds a component by customId in nested components
- *
  * @param {Array<Component|APIMessageComponent>} components The components to search in
  * @param {string} customId The customId to search for
  * @returns {Component|APIMessageComponent}
@@ -231,28 +188,34 @@ function findComponentByCustomId(components, customId) {
   );
 }
 
-exports.createComponent = createComponent;
-exports.findComponentByCustomId = findComponentByCustomId;
+module.exports = { createComponent, createComponentBuilder, findComponentByCustomId };
 
-const { ActionRow } = require('../structures/ActionRow.js');
-const { ButtonComponent } = require('../structures/ButtonComponent.js');
-const { ChannelSelectMenuComponent } = require('../structures/ChannelSelectMenuComponent.js');
-const { Component } = require('../structures/Component.js');
-const { ContainerComponent } = require('../structures/ContainerComponent.js');
-const { FileComponent } = require('../structures/FileComponent.js');
-const { LabelComponent } = require('../structures/LabelComponent.js');
-const { MediaGalleryComponent } = require('../structures/MediaGalleryComponent.js');
-const { MentionableSelectMenuComponent } = require('../structures/MentionableSelectMenuComponent.js');
-const { RoleSelectMenuComponent } = require('../structures/RoleSelectMenuComponent.js');
-const { SectionComponent } = require('../structures/SectionComponent.js');
-const { SeparatorComponent } = require('../structures/SeparatorComponent.js');
-const { StringSelectMenuComponent } = require('../structures/StringSelectMenuComponent.js');
-const { TextDisplayComponent } = require('../structures/TextDisplayComponent.js');
-const { TextInputComponent } = require('../structures/TextInputComponent.js');
-const { ThumbnailComponent } = require('../structures/ThumbnailComponent.js');
-const { UserSelectMenuComponent } = require('../structures/UserSelectMenuComponent.js');
+const ActionRow = require('../structures/ActionRow');
+const ActionRowBuilder = require('../structures/ActionRowBuilder');
+const ButtonBuilder = require('../structures/ButtonBuilder');
+const ButtonComponent = require('../structures/ButtonComponent');
+const ChannelSelectMenuBuilder = require('../structures/ChannelSelectMenuBuilder');
+const ChannelSelectMenuComponent = require('../structures/ChannelSelectMenuComponent');
+const Component = require('../structures/Component');
+const ContainerComponent = require('../structures/ContainerComponent');
+const FileComponent = require('../structures/FileComponent');
+const MediaGalleryComponent = require('../structures/MediaGalleryComponent');
+const MentionableSelectMenuBuilder = require('../structures/MentionableSelectMenuBuilder');
+const MentionableSelectMenuComponent = require('../structures/MentionableSelectMenuComponent');
+const RoleSelectMenuBuilder = require('../structures/RoleSelectMenuBuilder');
+const RoleSelectMenuComponent = require('../structures/RoleSelectMenuComponent');
+const SectionComponent = require('../structures/SectionComponent');
+const SeparatorComponent = require('../structures/SeparatorComponent');
+const StringSelectMenuBuilder = require('../structures/StringSelectMenuBuilder');
+const StringSelectMenuComponent = require('../structures/StringSelectMenuComponent');
+const TextDisplayComponent = require('../structures/TextDisplayComponent');
+const TextInputBuilder = require('../structures/TextInputBuilder');
+const TextInputComponent = require('../structures/TextInputComponent');
+const ThumbnailComponent = require('../structures/ThumbnailComponent');
+const UserSelectMenuBuilder = require('../structures/UserSelectMenuBuilder');
+const UserSelectMenuComponent = require('../structures/UserSelectMenuComponent');
 
-const ComponentTypeToClass = {
+const ComponentTypeToComponent = {
   [ComponentType.ActionRow]: ActionRow,
   [ComponentType.Button]: ButtonComponent,
   [ComponentType.StringSelect]: StringSelectMenuComponent,
@@ -268,5 +231,15 @@ const ComponentTypeToClass = {
   [ComponentType.Section]: SectionComponent,
   [ComponentType.Separator]: SeparatorComponent,
   [ComponentType.Thumbnail]: ThumbnailComponent,
-  [ComponentType.Label]: LabelComponent,
+};
+
+const ComponentTypeToBuilder = {
+  [ComponentType.ActionRow]: ActionRowBuilder,
+  [ComponentType.Button]: ButtonBuilder,
+  [ComponentType.StringSelect]: StringSelectMenuBuilder,
+  [ComponentType.TextInput]: TextInputBuilder,
+  [ComponentType.UserSelect]: UserSelectMenuBuilder,
+  [ComponentType.RoleSelect]: RoleSelectMenuBuilder,
+  [ComponentType.MentionableSelect]: MentionableSelectMenuBuilder,
+  [ComponentType.ChannelSelect]: ChannelSelectMenuBuilder,
 };

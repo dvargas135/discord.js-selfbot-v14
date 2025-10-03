@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+# [@discordjs/core@2.2.1](https://github.com/discordjs/discord.js/compare/@discordjs/core@2.2.0...@discordjs/core@2.2.1) - (2025-08-20)
+
+## Bug Fixes
+
+- Adjust `reason` in methods options (#10977) ([9fc3e5e](https://github.com/discordjs/discord.js/commit/9fc3e5ea72a2714d81cc57cbac4f378a49934446))
+
+# [@discordjs/core@2.2.0](https://github.com/discordjs/discord.js/compare/@discordjs/core@2.1.1...@discordjs/core@2.2.0) - (2025-06-25)
+
+## Features
+
+- **webhook:** Support `with_components` (#10945) ([7713627](https://github.com/discordjs/discord.js/commit/7713627fd18599a6187b325e1e4bc9a17cf23e21))
+
+# [@discordjs/core@2.1.1](https://github.com/discordjs/discord.js/compare/@discordjs/core@2.1.0...@discordjs/core@2.1.1) - (2025-06-16)
+
+## Bug Fixes
+
+- **guild:** Fix incorrectly-detected deprecated overload ([d0a535e](https://github.com/discordjs/discord.js/commit/d0a535ea6a66861276691a51547adfb2bcef0384))
+
+# [@discordjs/core@2.1.0](https://github.com/discordjs/discord.js/compare/@discordjs/core@2.0.1...@discordjs/core@2.1.0) - (2025-04-25)
+
+## Features
+
+- **website:** Include reexported members in docs (#10518) ([aa61c20](https://github.com/discordjs/discord.js/commit/aa61c20ffdac3f3a0dca224f9e48e614309ecb2e))
+
 # [@discordjs/core@2.0.0](https://github.com/discordjs/discord.js/compare/@discordjs/core@1.2.0...@discordjs/core@2.0.0) - (2024-09-01)
 
 ## Bug Fixes

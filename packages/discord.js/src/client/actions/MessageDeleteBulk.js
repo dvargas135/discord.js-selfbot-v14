@@ -1,8 +1,8 @@
 'use strict';
 
 const { Collection } = require('@discordjs/collection');
-const { Events } = require('../../util/Events.js');
-const { Action } = require('./Action.js');
+const Action = require('./Action');
+const Events = require('../../util/Events');
 
 class MessageDeleteBulkAction extends Action {
   handle(data) {
@@ -33,7 +33,6 @@ class MessageDeleteBulkAction extends Action {
 
       /**
        * Emitted whenever messages are deleted in bulk.
-       *
        * @event Client#messageDeleteBulk
        * @param {Collection<Snowflake, Message>} messages The deleted messages, mapped by their id
        * @param {GuildTextBasedChannel} channel The channel that the messages were deleted in
@@ -41,9 +40,8 @@ class MessageDeleteBulkAction extends Action {
       if (messages.size > 0) client.emit(Events.MessageBulkDelete, messages, channel);
       return { messages };
     }
-
     return {};
   }
 }
 
-exports.MessageDeleteBulkAction = MessageDeleteBulkAction;
+module.exports = MessageDeleteBulkAction;

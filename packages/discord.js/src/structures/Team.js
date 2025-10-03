@@ -2,12 +2,11 @@
 
 const { Collection } = require('@discordjs/collection');
 const { DiscordSnowflake } = require('@sapphire/snowflake');
-const { Base } = require('./Base.js');
-const { TeamMember } = require('./TeamMember.js');
+const Base = require('./Base');
+const TeamMember = require('./TeamMember');
 
 /**
  * Represents a Client OAuth2 Application Team.
- *
  * @extends {Base}
  */
 class Team extends Base {
@@ -19,7 +18,6 @@ class Team extends Base {
   _patch(data) {
     /**
      * The Team's id
-     *
      * @type {Snowflake}
      */
     this.id = data.id;
@@ -27,7 +25,6 @@ class Team extends Base {
     if ('name' in data) {
       /**
        * The name of the Team
-       *
        * @type {string}
        */
       this.name = data.name;
@@ -36,7 +33,6 @@ class Team extends Base {
     if ('icon' in data) {
       /**
        * The Team's icon hash
-       *
        * @type {?string}
        */
       this.icon = data.icon;
@@ -47,17 +43,14 @@ class Team extends Base {
     if ('owner_user_id' in data) {
       /**
        * The Team's owner id
-       *
        * @type {?Snowflake}
        */
       this.ownerId = data.owner_user_id;
     } else {
       this.ownerId ??= null;
     }
-
     /**
      * The Team's members
-     *
      * @type {Collection<Snowflake, TeamMember>}
      */
     this.members = new Collection();
@@ -70,7 +63,6 @@ class Team extends Base {
 
   /**
    * The owner of this team
-   *
    * @type {?TeamMember}
    * @readonly
    */
@@ -80,7 +72,6 @@ class Team extends Base {
 
   /**
    * The timestamp the team was created at
-   *
    * @type {number}
    * @readonly
    */
@@ -90,7 +81,6 @@ class Team extends Base {
 
   /**
    * The time the team was created at
-   *
    * @type {Date}
    * @readonly
    */
@@ -100,7 +90,6 @@ class Team extends Base {
 
   /**
    * A link to the team's icon.
-   *
    * @param {ImageURLOptions} [options={}] Options for the image URL
    * @returns {?string}
    */
@@ -111,7 +100,6 @@ class Team extends Base {
   /**
    * When concatenated with a string, this automatically returns the Team's name instead of the
    * Team object.
-   *
    * @returns {string}
    * @example
    * // Logs: Team name: My Team
@@ -126,4 +114,4 @@ class Team extends Base {
   }
 }
 
-exports.Team = Team;
+module.exports = Team;

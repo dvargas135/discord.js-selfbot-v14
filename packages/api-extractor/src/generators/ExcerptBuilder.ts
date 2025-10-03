@@ -11,7 +11,6 @@ import type { DeclarationReference } from '@microsoft/tsdoc/lib-commonjs/beta/De
 import * as ts from 'typescript';
 import type { AstDeclaration } from '../analyzer/AstDeclaration.js';
 import { Span } from '../analyzer/Span.js';
-import type { IWorkingPackageEntryPoint } from '../collector/WorkingPackage.js';
 import type { DeclarationReferenceGenerator } from './DeclarationReferenceGenerator.js';
 
 /**
@@ -33,8 +32,6 @@ export interface IExcerptBuilderNodeToCapture {
  * Internal state for ExcerptBuilder
  */
 interface IBuildSpanState {
-	entryPoint: IWorkingPackageEntryPoint;
-
 	/**
 	 * Tracks whether the last appended token was a separator. If so, and we're in the middle of
 	 * capturing a token range, then omit the separator from the range.
@@ -93,7 +90,6 @@ export class ExcerptBuilder {
 		astDeclaration: AstDeclaration,
 		nodesToCapture: IExcerptBuilderNodeToCapture[],
 		referenceGenerator: DeclarationReferenceGenerator,
-		entryPoint: IWorkingPackageEntryPoint,
 	): void {
 		let stopBeforeChildKind: ts.SyntaxKind | undefined;
 
@@ -122,7 +118,6 @@ export class ExcerptBuilder {
 		}
 
 		ExcerptBuilder._buildSpan(excerptTokens, span, {
-			entryPoint,
 			referenceGenerator,
 			startingNode: span.node,
 			stopBeforeChildKind,
@@ -190,7 +185,7 @@ export class ExcerptBuilder {
 
 			if (ts.isIdentifier(span.node)) {
 				const name: ts.Identifier = span.node;
-				canonicalReference = state.referenceGenerator.getDeclarationReferenceForIdentifier(name, state.entryPoint);
+				canonicalReference = state.referenceGenerator.getDeclarationReferenceForIdentifier(name);
 			}
 
 			if (canonicalReference) {

@@ -9,6 +9,9 @@ import {
 	type ImageSize,
 	type StickerExtension,
 } from './utils/constants.js';
+import { deprecationWarning } from './utils/utils.js';
+
+let deprecationEmittedForEmoji = false;
 
 /**
  * The options used for image URLs.
@@ -56,7 +59,7 @@ export interface ImageURLOptions extends BaseImageURLOptions {
 /**
  * The options to use when making a CDN URL
  */
-interface MakeURLOptions {
+export interface MakeURLOptions {
 	/**
 	 * The allowed extensions that can be used
 	 */
@@ -84,35 +87,13 @@ interface MakeURLOptions {
 }
 
 /**
- * Options for initializing the {@link CDN} class.
- */
-export interface CDNOptions {
-	/**
-	 * The base URL for the CDN.
-	 *
-	 * @defaultValue `DefaultRestOptions.cdn`
-	 */
-	cdn?: string | undefined;
-	/**
-	 * The base URL for the media proxy.
-	 *
-	 * @defaultValue `DefaultRestOptions.mediaProxy`
-	 */
-	mediaProxy?: string | undefined;
-}
-
-/**
  * The CDN link builder
  */
 export class CDN {
-	private readonly cdn: string;
-
-	private readonly mediaProxy: string;
-
-	public constructor({ cdn, mediaProxy }: CDNOptions = {}) {
-		this.cdn = cdn ?? DefaultRestOptions.cdn;
-		this.mediaProxy = mediaProxy ?? DefaultRestOptions.mediaProxy;
-	}
+	public constructor(
+		private readonly cdn: string = DefaultRestOptions.cdn,
+		private readonly mediaProxy: string = DefaultRestOptions.mediaProxy,
+	) {}
 
 	/**
 	 * Generates an app asset URL for a client's asset.
@@ -152,8 +133,33 @@ export class CDN {
 	 *
 	 * @param asset - The avatar decoration hash
 	 */
-	public avatarDecoration(asset: string): string {
-		return this.makeURL(`/avatar-decoration-presets/${asset}`, { extension: 'png' });
+	public avatarDecoration(asset: string): string;
+
+	/**
+	 * Generates a user avatar decoration URL.
+	 *
+	 * @deprecated This overload is deprecated. Pass a hash instead.
+	 * @param userId - The id of the user
+	 * @param userAvatarDecoration - The hash provided by Discord for this avatar decoration
+	 * @param options - Optional options for the avatar decoration
+	 */
+	public avatarDecoration(
+		userId: string,
+		userAvatarDecoration: string,
+		// eslint-disable-next-line @typescript-eslint/unified-signatures
+		options?: Readonly<BaseImageURLOptions>,
+	): string;
+
+	public avatarDecoration(
+		userIdOrAsset: string,
+		userAvatarDecoration?: string,
+		options?: Readonly<BaseImageURLOptions>,
+	): string {
+		if (userAvatarDecoration) {
+			return this.makeURL(`/avatar-decorations/${userIdOrAsset}/${userAvatarDecoration}`, options);
+		}
+
+		return this.makeURL(`/avatar-decoration-presets/${userIdOrAsset}`, { extension: 'png' });
 	}
 
 	/**
@@ -202,13 +208,41 @@ export class CDN {
 	}
 
 	/**
-	 * Generates an emoji's URL.
+	 * Generates an emoji's URL for an emoji.
 	 *
 	 * @param emojiId - The emoji id
 	 * @param options - Optional options for the emoji
 	 */
-	public emoji(emojiId: string, options?: Readonly<EmojiURLOptions>): string {
-		return this.makeURL(`/emojis/${emojiId}`, options);
+	public emoji(emojiId: string, options?: Readonly<EmojiURLOptions>): string;
+
+	/**
+	 * Generates an emoji's URL for an emoji.
+	 *
+	 * @param emojiId - The emoji id
+	 * @param extension - The extension of the emoji
+	 * @deprecated This overload is deprecated. Pass an object containing the extension instead.
+	 */
+	// eslint-disable-next-line @typescript-eslint/unified-signatures
+	public emoji(emojiId: string, extension?: ImageExtension): string;
+
+	public emoji(emojiId: string, options?: ImageExtension | Readonly<EmojiURLOptions>): string {
+		let resolvedOptions;
+
+		if (typeof options === 'string') {
+			if (!deprecationEmittedForEmoji) {
+				deprecationWarning(
+					'Passing a string for the second parameter of CDN#emoji() is deprecated. Use an object instead.',
+				);
+
+				deprecationEmittedForEmoji = true;
+			}
+
+			resolvedOptions = { extension: options };
+		} else {
+			resolvedOptions = options;
+		}
+
+		return this.makeURL(`/emojis/${emojiId}`, resolvedOptions);
 	}
 
 	/**
@@ -363,7 +397,7 @@ export class CDN {
 		hash: string,
 		{ forceStatic = false, ...options }: Readonly<ImageURLOptions> = {},
 	): string {
-		return this.makeURL(route, !forceStatic && hash.startsWith('a_') ? { ...options, animated: true } : options);
+		return this.makeURL(route, !forceStatic && hash.startsWith('a_') ? { ...options, extension: 'gif' } : options);
 	}
 
 	/**

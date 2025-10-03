@@ -1,9 +1,9 @@
 'use strict';
 
-const { Events } = require('../../util/Events.js');
-const { Action } = require('./Action.js');
+const Action = require('./Action');
+const Events = require('../../util/Events');
 
-class GuildRoleCreateAction extends Action {
+class GuildRoleCreate extends Action {
   handle(data) {
     const client = this.client;
     const guild = client.guilds.cache.get(data.guild_id);
@@ -13,15 +13,13 @@ class GuildRoleCreateAction extends Action {
       role = guild.roles._add(data.role);
       /**
        * Emitted whenever a role is created.
-       *
        * @event Client#roleCreate
        * @param {Role} role The role that was created
        */
       if (!already) client.emit(Events.GuildRoleCreate, role);
     }
-
     return { role };
   }
 }
 
-exports.GuildRoleCreateAction = GuildRoleCreateAction;
+module.exports = GuildRoleCreate;

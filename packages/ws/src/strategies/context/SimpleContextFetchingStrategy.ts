@@ -1,4 +1,3 @@
-import type { Awaitable } from '@discordjs/util';
 import type { IIdentifyThrottler } from '../../throttling/IIdentifyThrottler.js';
 import type { SessionInfo, WebSocketManager } from '../../ws/WebSocketManager.js';
 import type { FetchingStrategyOptions, IContextFetchingStrategy } from './IContextFetchingStrategy.js';
@@ -29,7 +28,7 @@ export class SimpleContextFetchingStrategy implements IContextFetchingStrategy {
 		return this.manager.options.retrieveSessionInfo(shardId);
 	}
 
-	public updateSessionInfo(shardId: number, sessionInfo: SessionInfo | null): Awaitable<void> {
+	public updateSessionInfo(shardId: number, sessionInfo: SessionInfo | null) {
 		return this.manager.options.updateSessionInfo(shardId, sessionInfo);
 	}
 

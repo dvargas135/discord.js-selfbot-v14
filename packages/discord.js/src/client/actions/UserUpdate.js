@@ -1,7 +1,7 @@
 'use strict';
 
-const { Events } = require('../../util/Events.js');
-const { Action } = require('./Action.js');
+const Action = require('./Action');
+const Events = require('../../util/Events');
 
 class UserUpdateAction extends Action {
   handle(data) {
@@ -15,7 +15,6 @@ class UserUpdateAction extends Action {
        * Emitted whenever a user's details (e.g. username) are changed.
        * Triggered by the Discord gateway events {@link Events.UserUpdate},
        * {@link Events.GuildMemberUpdate}, and {@link Events.PresenceUpdate}.
-       *
        * @event Client#userUpdate
        * @param {User} oldUser The user before the update
        * @param {User} newUser The user after the update
@@ -34,4 +33,4 @@ class UserUpdateAction extends Action {
   }
 }
 
-exports.UserUpdateAction = UserUpdateAction;
+module.exports = UserUpdateAction;

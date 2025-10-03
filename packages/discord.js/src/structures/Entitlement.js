@@ -1,10 +1,9 @@
 'use strict';
 
-const { Base } = require('./Base.js');
+const Base = require('./Base');
 
 /**
  * Represents an Entitlement
- *
  * @extends {Base}
  */
 class Entitlement extends Base {
@@ -13,7 +12,6 @@ class Entitlement extends Base {
 
     /**
      * The id of the entitlement
-     *
      * @type {Snowflake}
      */
     this.id = data.id;
@@ -25,7 +23,6 @@ class Entitlement extends Base {
     if ('sku_id' in data) {
       /**
        * The id of the associated SKU
-       *
        * @type {Snowflake}
        */
       this.skuId = data.sku_id;
@@ -34,7 +31,6 @@ class Entitlement extends Base {
     if ('user_id' in data) {
       /**
        * The id of the user that is granted access to this entitlement's SKU
-       *
        * @type {Snowflake}
        */
       this.userId = data.user_id;
@@ -43,7 +39,6 @@ class Entitlement extends Base {
     if ('guild_id' in data) {
       /**
        * The id of the guild that is granted access to this entitlement's SKU
-       *
        * @type {?Snowflake}
        */
       this.guildId = data.guild_id;
@@ -54,7 +49,6 @@ class Entitlement extends Base {
     if ('application_id' in data) {
       /**
        * The id of the parent application
-       *
        * @type {Snowflake}
        */
       this.applicationId = data.application_id;
@@ -63,7 +57,6 @@ class Entitlement extends Base {
     if ('type' in data) {
       /**
        * The type of this entitlement
-       *
        * @type {EntitlementType}
        */
       this.type = data.type;
@@ -72,7 +65,6 @@ class Entitlement extends Base {
     if ('deleted' in data) {
       /**
        * Whether this entitlement was deleted
-       *
        * @type {boolean}
        */
       this.deleted = data.deleted;
@@ -81,7 +73,6 @@ class Entitlement extends Base {
     if ('starts_at' in data) {
       /**
        * The timestamp at which this entitlement is valid
-       *
        * @type {?number}
        */
       this.startsTimestamp = data.starts_at ? Date.parse(data.starts_at) : null;
@@ -92,7 +83,6 @@ class Entitlement extends Base {
     if ('ends_at' in data) {
       /**
        * The timestamp at which this entitlement is no longer valid
-       *
        * @type {?number}
        */
       this.endsTimestamp = data.ends_at ? Date.parse(data.ends_at) : null;
@@ -103,7 +93,6 @@ class Entitlement extends Base {
     if ('consumed' in data) {
       /**
        * Whether this entitlement has been consumed
-       *
        * @type {boolean}
        */
       this.consumed = data.consumed;
@@ -114,7 +103,6 @@ class Entitlement extends Base {
 
   /**
    * The guild that is granted access to this entitlement's SKU
-   *
    * @type {?Guild}
    */
   get guild() {
@@ -124,7 +112,6 @@ class Entitlement extends Base {
 
   /**
    * The start date at which this entitlement is valid
-   *
    * @type {?Date}
    */
   get startsAt() {
@@ -133,7 +120,6 @@ class Entitlement extends Base {
 
   /**
    * The end date at which this entitlement is no longer valid
-   *
    * @type {?Date}
    */
   get endsAt() {
@@ -142,7 +128,6 @@ class Entitlement extends Base {
 
   /**
    * Indicates whether this entitlement is active
-   *
    * @returns {boolean}
    */
   isActive() {
@@ -151,7 +136,6 @@ class Entitlement extends Base {
 
   /**
    * Indicates whether this entitlement is a test entitlement
-   *
    * @returns {boolean}
    */
   isTest() {
@@ -160,7 +144,6 @@ class Entitlement extends Base {
 
   /**
    * Indicates whether this entitlement is a user subscription
-   *
    * @returns {boolean}
    */
   isUserSubscription() {
@@ -169,7 +152,6 @@ class Entitlement extends Base {
 
   /**
    * Indicates whether this entitlement is a guild subscription
-   *
    * @returns {boolean}
    */
   isGuildSubscription() {
@@ -178,17 +160,15 @@ class Entitlement extends Base {
 
   /**
    * Fetches the user that is granted access to this entitlement's SKU
-   *
    * @returns {Promise<User>}
    */
-  async fetchUser() {
+  fetchUser() {
     return this.client.users.fetch(this.userId);
   }
 
   /**
    * Marks this entitlement as consumed
    * <info>Only available for One-Time Purchase consumable SKUs.</info>
-   *
    * @returns {Promise<void>}
    */
   async consume() {

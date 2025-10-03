@@ -1,8 +1,7 @@
 import { STATUS_CODES } from 'node:http';
 import { URLSearchParams } from 'node:url';
 import { types } from 'node:util';
-import { type RequestInit, request, Headers, FormData as UndiciFormData } from 'undici';
-import type { HeaderRecord } from 'undici/types/header.js';
+import { type RequestInit, request, Headers } from 'undici';
 import type { ResponseLike } from '../shared.js';
 
 export type RequestOptions = Exclude<Parameters<typeof request>[1], undefined>;
@@ -29,7 +28,7 @@ export async function makeRequest(url: string, init: RequestInit): Promise<Respo
 		get bodyUsed() {
 			return res.body.bodyUsed;
 		},
-		headers: new Headers(res.headers as HeaderRecord),
+		headers: new Headers(res.headers as Record<string, string[] | string>),
 		status: res.statusCode,
 		statusText: STATUS_CODES[res.statusCode]!,
 		ok: res.statusCode >= 200 && res.statusCode < 300,
@@ -52,10 +51,8 @@ export async function resolveBody(body: RequestInit['body']): Promise<Exclude<Re
 		return new Uint8Array(body.buffer);
 	} else if (body instanceof Blob) {
 		return new Uint8Array(await body.arrayBuffer());
-	} else if (body instanceof UndiciFormData) {
-		return body;
 	} else if (body instanceof FormData) {
-		return globalToUndiciFormData(body);
+		return body;
 	} else if ((body as Iterable<Uint8Array>)[Symbol.iterator]) {
 		const chunks = [...(body as Iterable<Uint8Array>)];
 
@@ -71,18 +68,4 @@ export async function resolveBody(body: RequestInit['body']): Promise<Exclude<Re
 	}
 
 	throw new TypeError(`Unable to resolve body.`);
-}
-
-function globalToUndiciFormData(fd: globalThis.FormData): UndiciFormData {
-	const clone = new UndiciFormData();
-
-	for (const [name, value] of fd.entries()) {
-		if (typeof value === 'string') {
-			clone.append(name, value);
-		} else {
-			clone.append(name, value, value.name);
-		}
-	}
-
-	return clone;
 }

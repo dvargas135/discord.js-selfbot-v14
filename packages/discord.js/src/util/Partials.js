@@ -1,6 +1,6 @@
 'use strict';
 
-const { createEnum } = require('./Enums.js');
+const { createEnum } = require('./Enums');
 
 /**
  * The enumeration for partials.
@@ -17,7 +17,6 @@ const { createEnum } = require('./Enums.js');
  *   ]
  * });
  * ```
- *
  * @typedef {Object} Partials
  * @property {number} User The partial to receive uncached users.
  * @property {number} Channel The partial to receive uncached channels.
@@ -27,8 +26,6 @@ const { createEnum } = require('./Enums.js');
  * @property {number} Reaction The partial to receive uncached reactions.
  * @property {number} GuildScheduledEvent The partial to receive uncached guild scheduled events.
  * @property {number} ThreadMember The partial to receive uncached thread members.
- * @property {number} Poll The partial to receive uncached polls.
- * @property {number} PollAnswer The partial to receive uncached poll answers.
  * @property {number} SoundboardSound The partial to receive uncached soundboard sounds.
  */
 
@@ -37,7 +34,7 @@ const { createEnum } = require('./Enums.js');
  * @type {Partials}
  * @ignore
  */
-exports.Partials = createEnum([
+module.exports = createEnum([
   'User',
   'Channel',
   'GuildMember',
@@ -45,7 +42,5 @@ exports.Partials = createEnum([
   'Reaction',
   'GuildScheduledEvent',
   'ThreadMember',
-  'Poll',
-  'PollAnswer',
   'SoundboardSound',
 ]);

@@ -2,14 +2,12 @@
 
 /**
  * Manages the API methods of a data model.
- *
  * @abstract
  */
 class BaseManager {
   constructor(client) {
     /**
      * The client that instantiated this Manager
-     *
      * @name BaseManager#client
      * @type {Client}
      * @readonly
@@ -18,4 +16,4 @@ class BaseManager {
   }
 }
 
-exports.BaseManager = BaseManager;
+module.exports = BaseManager;

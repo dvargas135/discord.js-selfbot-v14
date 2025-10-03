@@ -2,10 +2,10 @@
 
 const { isJSONEncodable } = require('@discordjs/util');
 const snakeCase = require('lodash.snakecase');
+const { resolvePartialEmoji } = require('./Util');
 
 /**
  * Transforms camel-cased keys into snake cased keys
- *
  * @param {*} obj The object to transform
  * @returns {*}
  */
@@ -14,12 +14,18 @@ function toSnakeCase(obj) {
   if (obj instanceof Date) return obj;
   if (isJSONEncodable(obj)) return toSnakeCase(obj.toJSON());
   if (Array.isArray(obj)) return obj.map(toSnakeCase);
-  return Object.fromEntries(Object.entries(obj).map(([key, value]) => [snakeCase(key), toSnakeCase(value)]));
+  return Object.fromEntries(
+    Object.entries(obj).map(([key, value]) => [
+      snakeCase(key),
+      // TODO: The special handling of 'emoji' is just a temporary fix for v14, will be dropped in v15.
+      // See https://github.com/discordjs/discord.js/issues/10909
+      key === 'emoji' && typeof value === 'string' ? resolvePartialEmoji(value) : toSnakeCase(value),
+    ]),
+  );
 }
 
 /**
  * Transforms an API auto moderation action object to a camel-cased variant.
- *
  * @param {APIAutoModerationAction} autoModerationAction The action to transform
  * @returns {AutoModerationAction}
  * @ignore
@@ -37,7 +43,6 @@ function _transformAPIAutoModerationAction(autoModerationAction) {
 
 /**
  * Transforms an API message interaction metadata object to a camel-cased variant.
- *
  * @param {Client} client The client
  * @param {APIMessageInteractionMetadata} messageInteractionMetadata The metadata to transform
  * @returns {MessageInteractionMetadata}
@@ -59,7 +64,6 @@ function _transformAPIMessageInteractionMetadata(client, messageInteractionMetad
 
 /**
  * Transforms a guild scheduled event recurrence rule object to a snake-cased variant.
- *
  * @param {GuildScheduledEventRecurrenceRuleOptions} recurrenceRule The recurrence rule to transform
  * @returns {APIGuildScheduledEventRecurrenceRule}
  * @ignore
@@ -78,7 +82,6 @@ function _transformGuildScheduledEventRecurrenceRule(recurrenceRule) {
 
 /**
  * Transforms API incidents data to a camel-cased variant.
- *
  * @param {APIIncidentsData} data The incidents data to transform
  * @returns {IncidentActions}
  * @ignore
@@ -112,9 +115,11 @@ function _transformCollectibles(collectibles) {
   };
 }
 
-exports.toSnakeCase = toSnakeCase;
-exports._transformAPIAutoModerationAction = _transformAPIAutoModerationAction;
-exports._transformAPIMessageInteractionMetadata = _transformAPIMessageInteractionMetadata;
-exports._transformGuildScheduledEventRecurrenceRule = _transformGuildScheduledEventRecurrenceRule;
-exports._transformAPIIncidentsData = _transformAPIIncidentsData;
-exports._transformCollectibles = _transformCollectibles;
+module.exports = {
+  toSnakeCase,
+  _transformAPIAutoModerationAction,
+  _transformAPIMessageInteractionMetadata,
+  _transformGuildScheduledEventRecurrenceRule,
+  _transformAPIIncidentsData,
+  _transformCollectibles,
+};

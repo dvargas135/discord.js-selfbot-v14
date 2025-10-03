@@ -1,7 +1,7 @@
 'use strict';
 
-const { Events } = require('../../util/Events.js');
-const { Action } = require('./Action.js');
+const Action = require('./Action');
+const Events = require('../../util/Events');
 
 class GuildScheduledEventUserRemoveAction extends Action {
   handle(data) {
@@ -15,7 +15,6 @@ class GuildScheduledEventUserRemoveAction extends Action {
       if (guildScheduledEvent && user) {
         /**
          * Emitted whenever a user unsubscribes from a guild scheduled event
-         *
          * @event Client#guildScheduledEventUserRemove
          * @param {GuildScheduledEvent} guildScheduledEvent The guild scheduled event
          * @param {User} user The user who unsubscribed
@@ -30,4 +29,4 @@ class GuildScheduledEventUserRemoveAction extends Action {
   }
 }
 
-exports.GuildScheduledEventUserRemoveAction = GuildScheduledEventUserRemoveAction;
+module.exports = GuildScheduledEventUserRemoveAction;

@@ -3,14 +3,13 @@
 const { Collection } = require('@discordjs/collection');
 const { makeURLSearchParams } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v10');
-const { DiscordjsTypeError, ErrorCodes } = require('../errors/index.js');
-const { Subscription } = require('../structures/Subscription.js');
-const { resolveSKUId } = require('../util/Util.js');
-const { CachedManager } = require('./CachedManager.js');
+const CachedManager = require('./CachedManager');
+const { DiscordjsTypeError, ErrorCodes } = require('../errors/index');
+const { Subscription } = require('../structures/Subscription');
+const { resolveSKUId } = require('../util/Util');
 
 /**
  * Manages API methods for subscriptions and stores their cache.
- *
  * @extends {CachedManager}
  */
 class SubscriptionManager extends CachedManager {
@@ -20,14 +19,12 @@ class SubscriptionManager extends CachedManager {
 
   /**
    * The cache of this manager
-   *
    * @type {Collection<Snowflake, Subscription>}
    * @name SubscriptionManager#cache
    */
 
   /**
    * Options used to fetch a subscription
-   *
    * @typedef {BaseFetchOptions} FetchSubscriptionOptions
    * @property {SKUResolvable} sku The SKU to fetch the subscription for
    * @property {Snowflake} subscriptionId The id of the subscription to fetch
@@ -35,7 +32,6 @@ class SubscriptionManager extends CachedManager {
 
   /**
    * Options used to fetch subscriptions
-   *
    * @typedef {Object} FetchSubscriptionsOptions
    * @property {Snowflake} [after] Consider only subscriptions after this subscription id
    * @property {Snowflake} [before] Consider only subscriptions before this subscription id
@@ -47,7 +43,6 @@ class SubscriptionManager extends CachedManager {
 
   /**
    * Fetches subscriptions for this application
-   *
    * @param {FetchSubscriptionOptions|FetchSubscriptionsOptions} [options={}] Options for fetching the subscriptions
    * @returns {Promise<Subscription|Collection<Snowflake, Subscription>>}
    */

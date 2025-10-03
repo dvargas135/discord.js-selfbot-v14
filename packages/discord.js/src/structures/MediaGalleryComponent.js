@@ -1,11 +1,10 @@
 'use strict';
 
-const { Component } = require('./Component.js');
-const { MediaGalleryItem } = require('./MediaGalleryItem.js');
+const Component = require('./Component');
+const MediaGalleryItem = require('./MediaGalleryItem');
 
 /**
  * Represents a media gallery component
- *
  * @extends {Component}
  */
 class MediaGalleryComponent extends Component {
@@ -14,7 +13,6 @@ class MediaGalleryComponent extends Component {
 
     /**
      * The items in this media gallery
-     *
      * @type {MediaGalleryItem[]}
      * @readonly
      */
@@ -23,7 +21,6 @@ class MediaGalleryComponent extends Component {
 
   /**
    * Returns the API-compatible JSON for this component
-   *
    * @returns {APIMediaGalleryComponent}
    */
   toJSON() {
@@ -31,4 +28,4 @@ class MediaGalleryComponent extends Component {
   }
 }
 
-exports.MediaGalleryComponent = MediaGalleryComponent;
+module.exports = MediaGalleryComponent;

@@ -1,10 +1,9 @@
 'use strict';
 
-const { Webhook } = require('./Webhook.js');
+const Webhook = require('./Webhook');
 
 /**
  * Represents a webhook for an Interaction
- *
  * @implements {Webhook}
  */
 class InteractionWebhook {
@@ -16,7 +15,6 @@ class InteractionWebhook {
   constructor(client, id, token) {
     /**
      * The client that instantiated the interaction webhook
-     *
      * @name InteractionWebhook#client
      * @type {Client}
      * @readonly
@@ -27,41 +25,35 @@ class InteractionWebhook {
   }
 
   // These are here only for documentation purposes - they are implemented by Webhook
-
+  /* eslint-disable no-empty-function */
   /**
    * Sends a message with this webhook.
-   *
    * @param {string|MessagePayload|InteractionReplyOptions} options The content for the reply
    * @returns {Promise<Message>}
    */
 
-  async send() {}
+  send() {}
 
   /**
    * Gets a message that was sent by this webhook.
-   *
    * @param {Snowflake|'@original'} message The id of the message to fetch
    * @returns {Promise<Message>} Returns the message sent by this webhook
    */
 
-  async fetchMessage() {}
+  fetchMessage() {}
 
   /**
    * Edits a message that was sent by this webhook.
-   *
    * @param {MessageResolvable|'@original'} message The message to edit
    * @param {string|MessagePayload|WebhookMessageEditOptions} options The options to provide
    * @returns {Promise<Message>} Returns the message edited by this webhook
    */
 
-  async editMessage() {}
-
+  editMessage() {}
   deleteMessage() {}
-
-  // eslint-disable-next-line getter-return
   get url() {}
 }
 
 Webhook.applyToClass(InteractionWebhook, ['sendSlackMessage', 'edit', 'delete', 'createdTimestamp', 'createdAt']);
 
-exports.InteractionWebhook = InteractionWebhook;
+module.exports = InteractionWebhook;

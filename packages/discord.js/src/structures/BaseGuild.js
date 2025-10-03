@@ -3,11 +3,10 @@
 const { makeURLSearchParams } = require('@discordjs/rest');
 const { DiscordSnowflake } = require('@sapphire/snowflake');
 const { Routes, GuildFeature } = require('discord-api-types/v10');
-const { Base } = require('./Base.js');
+const Base = require('./Base');
 
 /**
  * The base class for {@link Guild}, {@link OAuth2Guild} and {@link InviteGuild}.
- *
  * @extends {Base}
  * @abstract
  */
@@ -17,28 +16,24 @@ class BaseGuild extends Base {
 
     /**
      * The guild's id
-     *
      * @type {Snowflake}
      */
     this.id = data.id;
 
     /**
      * The name of this guild
-     *
      * @type {string}
      */
     this.name = data.name;
 
     /**
      * The icon hash of this guild
-     *
      * @type {?string}
      */
     this.icon = data.icon;
 
     /**
      * An array of features available to this guild
-     *
      * @type {GuildFeature[]}
      */
     this.features = data.features;
@@ -46,7 +41,6 @@ class BaseGuild extends Base {
 
   /**
    * The timestamp this guild was created at
-   *
    * @type {number}
    * @readonly
    */
@@ -56,7 +50,6 @@ class BaseGuild extends Base {
 
   /**
    * The time this guild was created at
-   *
    * @type {Date}
    * @readonly
    */
@@ -66,22 +59,18 @@ class BaseGuild extends Base {
 
   /**
    * The acronym that shows up in place of a guild icon
-   *
    * @type {string}
    * @readonly
    */
   get nameAcronym() {
-    /* eslint-disable unicorn/prefer-string-replace-all */
     return this.name
       .replace(/'s /g, ' ')
-      .replace(/\w+/g, word => word[0])
+      .replace(/\w+/g, e => e[0])
       .replace(/\s/g, '');
-    /* eslint-enable unicorn/prefer-string-replace-all */
   }
 
   /**
    * Whether this guild is partnered
-   *
    * @type {boolean}
    * @readonly
    */
@@ -91,7 +80,6 @@ class BaseGuild extends Base {
 
   /**
    * Whether this guild is verified
-   *
    * @type {boolean}
    * @readonly
    */
@@ -101,7 +89,6 @@ class BaseGuild extends Base {
 
   /**
    * The URL to this guild's icon.
-   *
    * @param {ImageURLOptions} [options={}] Options for the image URL
    * @returns {?string}
    */
@@ -111,7 +98,6 @@ class BaseGuild extends Base {
 
   /**
    * Fetches this guild.
-   *
    * @returns {Promise<Guild>}
    */
   async fetch() {
@@ -123,7 +109,6 @@ class BaseGuild extends Base {
 
   /**
    * When concatenated with a string, this automatically returns the guild's name instead of the Guild object.
-   *
    * @returns {string}
    */
   toString() {
@@ -131,4 +116,4 @@ class BaseGuild extends Base {
   }
 }
 
-exports.BaseGuild = BaseGuild;
+module.exports = BaseGuild;

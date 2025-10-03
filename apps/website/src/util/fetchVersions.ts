@@ -1,9 +1,5 @@
-import Cloudflare from 'cloudflare';
+import { sql } from '@vercel/postgres';
 import { ENV } from './env';
-
-const client = new Cloudflare({
-	apiToken: process.env.CF_D1_DOCS_API_KEY,
-});
 
 export async function fetchVersions(packageName: string) {
 	if (ENV.IS_LOCAL_DEV) {
@@ -11,13 +7,11 @@ export async function fetchVersions(packageName: string) {
 	}
 
 	try {
-		const { result } = await client.d1.database.query(process.env.CF_D1_DOCS_ID!, {
-			account_id: process.env.CF_ACCOUNT_ID!,
-			sql: `select version from documentation where name = ? order by version desc;`,
-			params: [packageName],
-		});
+		const { rows } = await sql<{
+			version: string;
+		}>`select version from documentation where name = ${packageName} order by version desc`;
 
-		return (result[0]?.results as { version: string }[] | undefined) ?? [];
+		return rows;
 	} catch {
 		return [];
 	}

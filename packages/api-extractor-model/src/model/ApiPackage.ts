@@ -294,11 +294,7 @@ export class ApiPackage extends ApiItemContainerMixin(ApiNameMixin(ApiDocumented
 
 		const tsdocConfiguration: TSDocConfiguration = new TSDocConfiguration();
 
-		if (
-			versionToDeserialize >= ApiJsonSchemaVersion.V_1004 &&
-			'tsdocConfig' in jsonObject.metadata &&
-			'$schema' in jsonObject.metadata.tsdocConfig
-		) {
+		if (versionToDeserialize >= ApiJsonSchemaVersion.V_1004 && 'tsdocConfiguration' in jsonObject) {
 			const tsdocConfigFile: TSDocConfigFile = TSDocConfigFile.loadFromObject(jsonObject.metadata.tsdocConfig);
 			if (tsdocConfigFile.hasErrors) {
 				throw new Error(`Error loading ${apiJsonFilename}:\n` + tsdocConfigFile.getErrorSummary());
@@ -425,8 +421,6 @@ export class ApiPackage extends ApiItemContainerMixin(ApiNameMixin(ApiDocumented
 				for (const key of Object.keys(item)) {
 					if (key === 'dependencies') {
 						result[MinifyJSONMapping.dependencies] = item.dependencies;
-					} else if (key === 'tsdocConfig') {
-						result[MinifyJSONMapping.tsdocConfig] = item.tsdocConfig;
 					} else
 						result[MinifyJSONMapping[key as keyof typeof MinifyJSONMapping]] =
 							typeof item[key] === 'object' ? mapper(item[key]) : item[key];
@@ -447,8 +441,6 @@ export class ApiPackage extends ApiItemContainerMixin(ApiNameMixin(ApiDocumented
 				for (const key of Object.keys(item)) {
 					if (key === MinifyJSONMapping.dependencies) {
 						result.dependencies = item[MinifyJSONMapping.dependencies];
-					} else if (key === MinifyJSONMapping.tsdocConfig) {
-						result.tsdocConfig = item[MinifyJSONMapping.tsdocConfig];
 					} else
 						result[
 							Object.keys(MinifyJSONMapping).find(

@@ -2,12 +2,11 @@
 
 const { Collection } = require('@discordjs/collection');
 const { Routes } = require('discord-api-types/v10');
-const { Base } = require('./Base.js');
-const { WidgetMember } = require('./WidgetMember.js');
+const Base = require('./Base');
+const WidgetMember = require('./WidgetMember');
 
 /**
  * Represents a Widget.
- *
  * @extends {Base}
  */
 class Widget extends Base {
@@ -18,7 +17,6 @@ class Widget extends Base {
 
   /**
    * Represents a channel in a Widget
-   *
    * @typedef {Object} WidgetChannel
    * @property {Snowflake} id Id of the channel
    * @property {string} name Name of the channel
@@ -28,7 +26,6 @@ class Widget extends Base {
   _patch(data) {
     /**
      * The id of the guild.
-     *
      * @type {Snowflake}
      */
     this.id = data.id;
@@ -36,7 +33,6 @@ class Widget extends Base {
     if ('name' in data) {
       /**
        * The name of the guild.
-       *
        * @type {string}
        */
       this.name = data.name;
@@ -45,7 +41,6 @@ class Widget extends Base {
     if ('instant_invite' in data) {
       /**
        * The invite of the guild.
-       *
        * @type {?string}
        */
       this.instantInvite = data.instant_invite;
@@ -53,7 +48,6 @@ class Widget extends Base {
 
     /**
      * The list of channels in the guild.
-     *
      * @type {Collection<Snowflake, WidgetChannel>}
      */
     this.channels = new Collection();
@@ -64,7 +58,6 @@ class Widget extends Base {
     /**
      * The list of members in the guild.
      * These strings are just arbitrary numbers, they aren't Snowflakes.
-     *
      * @type {Collection<string, WidgetMember>}
      */
     this.members = new Collection();
@@ -75,7 +68,6 @@ class Widget extends Base {
     if ('presence_count' in data) {
       /**
        * The number of members online.
-       *
        * @type {number}
        */
       this.presenceCount = data.presence_count;
@@ -84,7 +76,6 @@ class Widget extends Base {
 
   /**
    * Update the Widget.
-   *
    * @returns {Promise<Widget>}
    */
   async fetch() {
@@ -95,7 +86,6 @@ class Widget extends Base {
 
   /**
    * Returns a URL for the PNG widget of the guild.
-   *
    * @param {GuildWidgetStyle} [style] The style for the widget image
    * @returns {string}
    */
@@ -104,4 +94,4 @@ class Widget extends Base {
   }
 }
 
-exports.Widget = Widget;
+module.exports = Widget;

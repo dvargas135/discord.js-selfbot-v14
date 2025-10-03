@@ -2,7 +2,7 @@
 
 const { Collection } = require('@discordjs/collection');
 const { FormattingPatterns } = require('discord-api-types/v10');
-const { flatten } = require('../util/Util.js');
+const { flatten } = require('../util/Util');
 
 /**
  * Keeps track of mentions in a {@link Message}.
@@ -11,7 +11,6 @@ class MessageMentions {
   /**
    * A regular expression that matches `@everyone` and `@here`.
    * The `mention` group property is present on the `exec` result of this expression.
-   *
    * @type {RegExp}
    * @memberof MessageMentions
    */
@@ -20,7 +19,6 @@ class MessageMentions {
   /**
    * A regular expression that matches user mentions like `<@81440962496172032>`.
    * The `id` group property is present on the `exec` result of this expression.
-   *
    * @type {RegExp}
    * @memberof MessageMentions
    */
@@ -29,7 +27,6 @@ class MessageMentions {
   /**
    * A regular expression that matches role mentions like `<@&297577916114403338>`.
    * The `id` group property is present on the `exec` result of this expression.
-   *
    * @type {RegExp}
    * @memberof MessageMentions
    */
@@ -38,7 +35,6 @@ class MessageMentions {
   /**
    * A regular expression that matches channel mentions like `<#222079895583457280>`.
    * The `id` group property is present on the `exec` result of this expression.
-   *
    * @type {RegExp}
    * @memberof MessageMentions
    */
@@ -46,7 +42,6 @@ class MessageMentions {
 
   /**
    * A global regular expression variant of {@link MessageMentions.ChannelsPattern}.
-   *
    * @type {RegExp}
    * @memberof MessageMentions
    * @private
@@ -55,7 +50,6 @@ class MessageMentions {
 
   /**
    * A global regular expression variant of {@link MessageMentions.UsersPattern}.
-   *
    * @type {RegExp}
    * @memberof MessageMentions
    * @private
@@ -65,7 +59,6 @@ class MessageMentions {
   constructor(message, users, roles, everyone, crosspostedChannels, repliedUser) {
     /**
      * The client the message is from
-     *
      * @type {Client}
      * @readonly
      */
@@ -73,7 +66,6 @@ class MessageMentions {
 
     /**
      * The guild the message is in
-     *
      * @type {?Guild}
      * @readonly
      */
@@ -81,7 +73,6 @@ class MessageMentions {
 
     /**
      * The initial message content
-     *
      * @type {string}
      * @readonly
      * @private
@@ -90,7 +81,6 @@ class MessageMentions {
 
     /**
      * Whether `@everyone` or `@here` were mentioned
-     *
      * @type {boolean}
      */
     this.everyone = Boolean(everyone);
@@ -100,7 +90,6 @@ class MessageMentions {
         /**
          * Any users that were mentioned
          * <info>Order as received from the API, not as they appear in the message content</info>
-         *
          * @type {Collection<Snowflake, User>}
          */
         this.users = new Collection(users);
@@ -110,7 +99,6 @@ class MessageMentions {
           if (mention.member && message.guild) {
             message.guild.members._add(Object.assign(mention.member, { user: mention }));
           }
-
           const user = message.client.users._add(mention);
           this.users.set(user.id, user);
         }
@@ -123,7 +111,6 @@ class MessageMentions {
       /**
        * Any roles that were mentioned
        * <info>Order as received from the API, not as they appear in the message content</info>
-       *
        * @type {Collection<Snowflake, Role>}
        */
       this.roles = new Collection(roles);
@@ -142,7 +129,6 @@ class MessageMentions {
 
     /**
      * Cached members for {@link MessageMentions#members}
-     *
      * @type {?Collection<Snowflake, GuildMember>}
      * @private
      */
@@ -150,7 +136,6 @@ class MessageMentions {
 
     /**
      * Cached channels for {@link MessageMentions#channels}
-     *
      * @type {?Collection<Snowflake, BaseChannel>}
      * @private
      */
@@ -158,7 +143,6 @@ class MessageMentions {
 
     /**
      * Cached users for {@link MessageMentions#parsedUsers}
-     *
      * @type {?Collection<Snowflake, User>}
      * @private
      */
@@ -166,7 +150,6 @@ class MessageMentions {
 
     /**
      * Crossposted channel data.
-     *
      * @typedef {Object} CrosspostedChannel
      * @property {Snowflake} channelId The mentioned channel's id
      * @property {Snowflake} guildId The id of the guild that has the channel
@@ -179,7 +162,6 @@ class MessageMentions {
         /**
          * A collection of crossposted channels
          * <info>Order as received from the API, not as they appear in the message content</info>
-         *
          * @type {Collection<Snowflake, CrosspostedChannel>}
          */
         this.crosspostedChannels = new Collection(crosspostedChannels);
@@ -200,7 +182,6 @@ class MessageMentions {
 
     /**
      * The author of the message that this message is a reply to
-     *
      * @type {?User}
      */
     this.repliedUser = repliedUser ? this.client.users._add(repliedUser) : null;
@@ -209,7 +190,6 @@ class MessageMentions {
   /**
    * Any members that were mentioned (only in {@link Guild}s)
    * <info>Order as received from the API, not as they appear in the message content</info>
-   *
    * @type {?Collection<Snowflake, GuildMember>}
    * @readonly
    */
@@ -217,18 +197,16 @@ class MessageMentions {
     if (this._members) return this._members;
     if (!this.guild) return null;
     this._members = new Collection();
-    for (const user of this.users.values()) {
+    this.users.forEach(user => {
       const member = this.guild.members.resolve(user);
       if (member) this._members.set(member.user.id, member);
-    }
-
+    });
     return this._members;
   }
 
   /**
    * Any channels that were mentioned
    * <info>Order as they appear first in the message content</info>
-   *
    * @type {Collection<Snowflake, BaseChannel>}
    * @readonly
    */
@@ -248,7 +226,6 @@ class MessageMentions {
   /**
    * Any user mentions that were included in the message content
    * <info>Order as they appear first in the message content</info>
-   *
    * @type {Collection<Snowflake, User>}
    * @readonly
    */
@@ -260,13 +237,11 @@ class MessageMentions {
       const user = this.client.users.cache.get(matches[1]);
       if (user) this._parsedUsers.set(user.id, user);
     }
-
     return this._parsedUsers;
   }
 
   /**
    * Options used to check for a mention.
-   *
    * @typedef {Object} MessageMentionsHasOptions
    * @property {boolean} [ignoreDirect=false] Whether to ignore direct mentions to the item
    * @property {boolean} [ignoreRoles=false] Whether to ignore role mentions to a guild member
@@ -278,7 +253,6 @@ class MessageMentions {
    * Checks if a user, guild member, thread member, role, or channel is mentioned.
    * Takes into account user mentions, role mentions, channel mentions,
    * replied user mention, and `@everyone`/`@here` mentions.
-   *
    * @param {UserResolvable|RoleResolvable|ChannelResolvable} data The User/Role/Channel to check for
    * @param {MessageMentionsHasOptions} [options] The options for the check
    * @returns {boolean}
@@ -320,4 +294,4 @@ class MessageMentions {
   }
 }
 
-exports.MessageMentions = MessageMentions;
+module.exports = MessageMentions;

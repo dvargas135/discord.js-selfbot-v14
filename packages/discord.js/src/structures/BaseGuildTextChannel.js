@@ -1,13 +1,12 @@
 'use strict';
 
-const { GuildMessageManager } = require('../managers/GuildMessageManager.js');
-const { GuildTextThreadManager } = require('../managers/GuildTextThreadManager.js');
-const { GuildChannel } = require('./GuildChannel.js');
-const { TextBasedChannel } = require('./interfaces/TextBasedChannel.js');
+const GuildChannel = require('./GuildChannel');
+const TextBasedChannel = require('./interfaces/TextBasedChannel');
+const GuildMessageManager = require('../managers/GuildMessageManager');
+const GuildTextThreadManager = require('../managers/GuildTextThreadManager');
 
 /**
  * Represents a text-based guild channel on Discord.
- *
  * @extends {GuildChannel}
  * @implements {TextBasedChannel}
  */
@@ -17,21 +16,18 @@ class BaseGuildTextChannel extends GuildChannel {
 
     /**
      * A manager of the messages sent to this channel
-     *
      * @type {GuildMessageManager}
      */
     this.messages = new GuildMessageManager(this);
 
     /**
      * A manager of the threads belonging to this channel
-     *
      * @type {GuildTextThreadManager}
      */
     this.threads = new GuildTextThreadManager(this);
 
     /**
      * If the guild considers this channel NSFW
-     *
      * @type {boolean}
      */
     this.nsfw = Boolean(data.nsfw);
@@ -45,7 +41,6 @@ class BaseGuildTextChannel extends GuildChannel {
     if ('topic' in data) {
       /**
        * The topic of the text channel
-       *
        * @type {?string}
        */
       this.topic = data.topic;
@@ -58,7 +53,6 @@ class BaseGuildTextChannel extends GuildChannel {
     if ('last_message_id' in data) {
       /**
        * The last message id sent in the channel, if one was sent
-       *
        * @type {?Snowflake}
        */
       this.lastMessageId = data.last_message_id;
@@ -67,7 +61,6 @@ class BaseGuildTextChannel extends GuildChannel {
     if ('last_pin_timestamp' in data) {
       /**
        * The timestamp when the last pinned message was pinned, if there was one
-       *
        * @type {?number}
        */
       this.lastPinTimestamp = data.last_pin_timestamp ? Date.parse(data.last_pin_timestamp) : null;
@@ -76,7 +69,6 @@ class BaseGuildTextChannel extends GuildChannel {
     if ('default_auto_archive_duration' in data) {
       /**
        * The default auto archive duration for newly created threads in this channel
-       *
        * @type {?ThreadAutoArchiveDuration}
        */
       this.defaultAutoArchiveDuration = data.default_auto_archive_duration;
@@ -85,7 +77,6 @@ class BaseGuildTextChannel extends GuildChannel {
     if ('default_thread_rate_limit_per_user' in data) {
       /**
        * The initial rate limit per user (slowmode) to set on newly created threads in a channel.
-       *
        * @type {?number}
        */
       this.defaultThreadRateLimitPerUser = data.default_thread_rate_limit_per_user;
@@ -100,30 +91,27 @@ class BaseGuildTextChannel extends GuildChannel {
 
   /**
    * Sets the default auto archive duration for all newly created threads in this channel.
-   *
    * @param {ThreadAutoArchiveDuration} defaultAutoArchiveDuration The new default auto archive duration
    * @param {string} [reason] Reason for changing the channel's default auto archive duration
    * @returns {Promise<TextChannel>}
    */
-  async setDefaultAutoArchiveDuration(defaultAutoArchiveDuration, reason) {
+  setDefaultAutoArchiveDuration(defaultAutoArchiveDuration, reason) {
     return this.edit({ defaultAutoArchiveDuration, reason });
   }
 
   /**
    * Sets the type of this channel.
-   * <info>Only conversion between {@link TextChannel} and {@link AnnouncementChannel} is supported.</info>
-   *
+   * <info>Only conversion between {@link TextChannel} and {@link NewsChannel} is supported.</info>
    * @param {ChannelType.GuildText|ChannelType.GuildAnnouncement} type The new channel type
    * @param {string} [reason] Reason for changing the channel's type
    * @returns {Promise<GuildChannel>}
    */
-  async setType(type, reason) {
+  setType(type, reason) {
     return this.edit({ type, reason });
   }
 
   /**
    * Sets a new topic for the guild channel.
-   *
    * @param {?string} topic The new topic for the guild channel
    * @param {string} [reason] Reason for changing the guild channel's topic
    * @returns {Promise<GuildChannel>}
@@ -133,22 +121,20 @@ class BaseGuildTextChannel extends GuildChannel {
    *   .then(newChannel => console.log(`Channel's new topic is ${newChannel.topic}`))
    *   .catch(console.error);
    */
-  async setTopic(topic, reason) {
+  setTopic(topic, reason) {
     return this.edit({ topic, reason });
   }
 
   /**
    * Data that can be resolved to an Application. This can be:
-   * - An Application
-   * - An Activity with associated Application
-   * - A Snowflake
-   *
+   * * An Application
+   * * An Activity with associated Application
+   * * A Snowflake
    * @typedef {Application|Snowflake} ApplicationResolvable
    */
 
   /**
    * Options used to create an invite to a guild channel.
-   *
    * @typedef {Object} InviteCreateOptions
    * @property {boolean} [temporary] Whether members that joined via the invite should be automatically
    * kicked after 24 hours if they have not yet received a role
@@ -166,7 +152,6 @@ class BaseGuildTextChannel extends GuildChannel {
 
   /**
    * Creates an invite to this guild channel.
-   *
    * @param {InviteCreateOptions} [options={}] The options for creating the invite
    * @returns {Promise<Invite>}
    * @example
@@ -175,51 +160,37 @@ class BaseGuildTextChannel extends GuildChannel {
    *   .then(invite => console.log(`Created an invite with a code of ${invite.code}`))
    *   .catch(console.error);
    */
-  async createInvite(options) {
+  createInvite(options) {
     return this.guild.invites.create(this.id, options);
   }
 
   /**
    * Fetches a collection of invites to this guild channel.
    * Resolves with a collection mapping invites by their codes.
-   *
    * @param {boolean} [cache=true] Whether or not to cache the fetched invites
    * @returns {Promise<Collection<string, Invite>>}
    */
-  async fetchInvites(cache = true) {
+  fetchInvites(cache = true) {
     return this.guild.invites.fetch({ channelId: this.id, cache });
   }
 
   // These are here only for documentation purposes - they are implemented by TextBasedChannel
-
-  /* eslint-disable getter-return */
+  /* eslint-disable no-empty-function */
   get lastMessage() {}
-
   get lastPinAt() {}
-
   send() {}
-
   sendTyping() {}
-
   createMessageCollector() {}
-
   awaitMessages() {}
-
   createMessageComponentCollector() {}
-
   awaitMessageComponent() {}
-
   bulkDelete() {}
-
   fetchWebhooks() {}
-
   createWebhook() {}
-
   setRateLimitPerUser() {}
-
   setNSFW() {}
 }
 
-TextBasedChannel.applyToClass(BaseGuildTextChannel);
+TextBasedChannel.applyToClass(BaseGuildTextChannel, true);
 
-exports.BaseGuildTextChannel = BaseGuildTextChannel;
+module.exports = BaseGuildTextChannel;

@@ -28,3 +28,4 @@ docs/**/*
 
 # Generated files
 typings/index.d.mts
+typings/rawDataTypes.d.mts

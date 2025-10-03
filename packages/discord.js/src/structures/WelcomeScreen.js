@@ -2,12 +2,11 @@
 
 const { Collection } = require('@discordjs/collection');
 const { GuildFeature } = require('discord-api-types/v10');
-const { Base } = require('./Base.js');
-const { WelcomeChannel } = require('./WelcomeChannel.js');
+const Base = require('./Base');
+const WelcomeChannel = require('./WelcomeChannel');
 
 /**
  * Represents a welcome screen.
- *
  * @extends {Base}
  */
 class WelcomeScreen extends Base {
@@ -16,21 +15,18 @@ class WelcomeScreen extends Base {
 
     /**
      * The guild for this welcome screen
-     *
      * @type {Guild}
      */
     this.guild = guild;
 
     /**
      * The description of this welcome screen
-     *
      * @type {?string}
      */
     this.description = data.description ?? null;
 
     /**
      * Collection of welcome channels belonging to this welcome screen
-     *
      * @type {Collection<Snowflake, WelcomeChannel>}
      */
     this.welcomeChannels = new Collection();
@@ -43,7 +39,6 @@ class WelcomeScreen extends Base {
 
   /**
    * Whether the welcome screen is enabled on the guild
-   *
    * @type {boolean}
    */
   get enabled() {
@@ -51,4 +46,4 @@ class WelcomeScreen extends Base {
   }
 }
 
-exports.WelcomeScreen = WelcomeScreen;
+module.exports = WelcomeScreen;

@@ -2,14 +2,14 @@
 
 const assert = require('node:assert');
 const { ChannelType, GatewayIntentBits } = require('discord-api-types/v10');
-const { token } = require('./auth.js');
-const { Client, Events } = require('../src/index.js');
+const { token } = require('./auth');
+const { Client } = require('../src');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 
-client.on(Events.ClientReady, async readyClient => {
+client.on('ready', async () => {
   try {
-    const guild = await readyClient.guilds.create('testing', {
+    const guild = await client.guilds.create('testing', {
       channels: [
         { name: 'afk channel', type: ChannelType.GuildVoice, id: 0 },
         { name: 'system-channel', id: 1 },
@@ -26,7 +26,7 @@ client.on(Events.ClientReady, async readyClient => {
   } catch (error) {
     console.error(error);
   } finally {
-    await readyClient.destroy();
+    await client.destroy();
   }
 });
 

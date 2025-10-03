@@ -9,7 +9,7 @@ import { PackageDocComment } from '../aedoc/PackageDocComment.js';
 import type { AstDeclaration } from '../analyzer/AstDeclaration.js';
 import type { AstEntity } from '../analyzer/AstEntity.js';
 import { AstImport } from '../analyzer/AstImport.js';
-import type { AstModule, IAstModuleExportInfo } from '../analyzer/AstModule.js';
+import type { AstModule, AstModuleExportInfo } from '../analyzer/AstModule.js';
 import { AstNamespaceImport } from '../analyzer/AstNamespaceImport.js';
 import { AstReferenceResolver } from '../analyzer/AstReferenceResolver.js';
 import { AstSymbol } from '../analyzer/AstSymbol.js';
@@ -18,14 +18,12 @@ import { TypeScriptHelpers } from '../analyzer/TypeScriptHelpers.js';
 import { TypeScriptInternals, type IGlobalVariableAnalyzer } from '../analyzer/TypeScriptInternals.js';
 import { ExtractorConfig } from '../api/ExtractorConfig.js';
 import { ExtractorMessageId } from '../api/ExtractorMessageId.js';
-import type { IConfigEntryPoint } from '../api/IConfigFile';
 import { ApiItemMetadata, type IApiItemMetadataOptions } from './ApiItemMetadata.js';
 import { CollectorEntity } from './CollectorEntity.js';
 import { type DeclarationMetadata, InternalDeclarationMetadata } from './DeclarationMetadata.js';
 import type { MessageRouter } from './MessageRouter.js';
 import type { SourceMapper } from './SourceMapper.js';
 import { SymbolMetadata } from './SymbolMetadata.js';
-import type { IWorkingPackageEntryPoint } from './WorkingPackage.js';
 import { WorkingPackage } from './WorkingPackage.js';
 
 /**
@@ -85,14 +83,11 @@ export class Collector {
 
 	private readonly _tsdocParser: tsdoc.TSDocParser;
 
-	private _astEntryPoints: AstModule[] | undefined;
+	private _astEntryPoint: AstModule | undefined;
+
+	private readonly _entities: CollectorEntity[] = [];
 
 	private readonly _entitiesByAstEntity: Map<AstEntity, CollectorEntity> = new Map<AstEntity, CollectorEntity>();
-
-	private readonly _entitiesByAstEntryPoint: Map<IWorkingPackageEntryPoint, CollectorEntity[]> = new Map<
-		IWorkingPackageEntryPoint,
-		CollectorEntity[]
-	>();
 
 	private readonly _entitiesBySymbol: Map<ts.Symbol, CollectorEntity> = new Map<ts.Symbol, CollectorEntity>();
 
@@ -112,23 +107,13 @@ export class Collector {
 		this.extractorConfig = options.extractorConfig;
 		this.sourceMapper = options.sourceMapper;
 
-		const entryPoints: IConfigEntryPoint[] = [
+		const entryPointSourceFile: ts.SourceFile | undefined = options.program.getSourceFile(
 			this.extractorConfig.mainEntryPointFilePath,
-			...this.extractorConfig.additionalEntryPoints,
-		];
+		);
 
-		const workingPackageEntryPoints: IWorkingPackageEntryPoint[] = entryPoints.map((entryPoint) => {
-			const sourceFile: ts.SourceFile | undefined = options.program.getSourceFile(entryPoint.filePath);
-
-			if (!sourceFile) {
-				throw new Error('Unable to load file: ' + entryPoint.filePath);
-			}
-
-			return {
-				modulePath: entryPoint.modulePath,
-				sourceFile,
-			};
-		});
+		if (!entryPointSourceFile) {
+			throw new Error('Unable to load file: ' + this.extractorConfig.mainEntryPointFilePath);
+		}
 
 		if (!this.extractorConfig.packageFolder || !this.extractorConfig.packageJson) {
 			throw new Error('Unable to find a package.json file for the project being analyzed');
@@ -137,7 +122,7 @@ export class Collector {
 		this.workingPackage = new WorkingPackage({
 			packageFolder: this.extractorConfig.packageFolder,
 			packageJson: this.extractorConfig.packageJson,
-			entryPoints: workingPackageEntryPoints,
+			entryPointSourceFile,
 		});
 
 		this.messageRouter = options.messageRouter;
@@ -184,8 +169,8 @@ export class Collector {
 		return this._dtsLibReferenceDirectives;
 	}
 
-	public get entities(): ReadonlyMap<IWorkingPackageEntryPoint, CollectorEntity[]> {
-		return this._entitiesByAstEntryPoint;
+	public get entities(): readonly CollectorEntity[] {
+		return this._entities;
 	}
 
 	/**
@@ -200,7 +185,7 @@ export class Collector {
 	 * Perform the analysis.
 	 */
 	public analyze(): void {
-		if (this._astEntryPoints) {
+		if (this._astEntryPoint) {
 			throw new Error('DtsRollupGenerator.analyze() was already called');
 		}
 
@@ -245,101 +230,59 @@ export class Collector {
 			);
 		}
 
-		// Build entry points
-		for (const entryPoint of this.workingPackage.entryPoints) {
-			const { sourceFile: entryPointSourceFile } = entryPoint;
+		// Build the entry point
+		const entryPointSourceFile: ts.SourceFile = this.workingPackage.entryPointSourceFile;
 
-			const astEntryPoint: AstModule = this.astSymbolTable.fetchAstModuleFromWorkingPackage(entryPointSourceFile);
+		const astEntryPoint: AstModule = this.astSymbolTable.fetchAstModuleFromWorkingPackage(entryPointSourceFile);
+		this._astEntryPoint = astEntryPoint;
 
-			if (this._astEntryPoints) {
-				this._astEntryPoints.push(astEntryPoint);
-			} else {
-				this._astEntryPoints = [astEntryPoint];
-			}
+		const packageDocCommentTextRange: ts.TextRange | undefined = PackageDocComment.tryFindInSourceFile(
+			entryPointSourceFile,
+			this,
+		);
 
-			if (!this._entitiesByAstEntryPoint.has(entryPoint)) {
-				this._entitiesByAstEntryPoint.set(entryPoint, []);
-			}
+		if (packageDocCommentTextRange) {
+			const range: tsdoc.TextRange = tsdoc.TextRange.fromStringRange(
+				entryPointSourceFile.text,
+				packageDocCommentTextRange.pos,
+				packageDocCommentTextRange.end,
+			);
 
-			// Process pacakgeDocComment only for the default entry point
-			if (this.workingPackage.isDefaultEntryPoint(entryPoint)) {
-				const packageDocCommentTextRange: ts.TextRange | undefined = PackageDocComment.tryFindInSourceFile(
-					entryPointSourceFile,
-					this,
-				);
+			this.workingPackage.tsdocParserContext = this._tsdocParser.parseRange(range);
 
-				if (packageDocCommentTextRange) {
-					const range: tsdoc.TextRange = tsdoc.TextRange.fromStringRange(
-						entryPointSourceFile.text,
-						packageDocCommentTextRange.pos,
-						packageDocCommentTextRange.end,
-					);
+			this.messageRouter.addTsdocMessages(this.workingPackage.tsdocParserContext, entryPointSourceFile);
 
-					this.workingPackage.tsdocParserContext = this._tsdocParser.parseRange(range);
+			this.workingPackage.tsdocComment = this.workingPackage.tsdocParserContext!.docComment;
+		}
 
-					this.messageRouter.addTsdocMessages(this.workingPackage.tsdocParserContext, entryPointSourceFile);
+		const astModuleExportInfo: AstModuleExportInfo = this.astSymbolTable.fetchAstModuleExportInfo(astEntryPoint);
 
-					this.workingPackage.tsdocComment = this.workingPackage.tsdocParserContext!.docComment;
-				}
-			}
+		// Create a CollectorEntity for each top-level export.
+		const processedAstEntities: AstEntity[] = [];
+		for (const [exportName, astEntity] of astModuleExportInfo.exportedLocalEntities) {
+			this._createCollectorEntity(astEntity, exportName);
+			processedAstEntities.push(astEntity);
+		}
 
-			const { exportedLocalEntities, starExportedExternalModules, visitedAstModules }: IAstModuleExportInfo =
-				this.astSymbolTable.fetchAstModuleExportInfo(astEntryPoint);
-
-			// Create a CollectorEntity for each top-level export.
-			const processedAstEntities: AstEntity[] = [];
-			for (const [exportName, astEntity] of exportedLocalEntities) {
-				this._createCollectorEntity(astEntity, entryPoint, exportName);
-				processedAstEntities.push(astEntity);
-			}
-
-			// Recursively create the remaining CollectorEntities after the top-level entities
-			// have been processed.
-			const alreadySeenAstEntities: Set<AstEntity> = new Set<AstEntity>();
-			for (const astEntity of processedAstEntities) {
-				this._recursivelyCreateEntities(astEntity, entryPoint, alreadySeenAstEntities);
-				if (astEntity instanceof AstSymbol) {
-					this.fetchSymbolMetadata(astEntity);
-				}
-			}
-
-			// Ensure references are collected from any intermediate files that
-			// only include exports
-			const nonExternalSourceFiles: Set<ts.SourceFile> = new Set();
-			for (const { sourceFile, isExternal } of visitedAstModules) {
-				if (!nonExternalSourceFiles.has(sourceFile) && !isExternal) {
-					nonExternalSourceFiles.add(sourceFile);
-				}
-			}
-
-			// Here, we're collecting reference directives from all non-external source files
-			// that were encountered while looking for exports, but only those references that
-			// were explicitly written by the developer and marked with the `preserve="true"`
-			// attribute. In TS >= 5.5, only references that are explicitly authored and marked
-			// with `preserve="true"` are included in the output. See https://github.com/microsoft/TypeScript/pull/57681
-			//
-			// The `_collectReferenceDirectives` function pulls in all references in files that
-			// contain definitions, but does not examine files that only reexport from other
-			// files. Here, we're looking through files that were missed by `_collectReferenceDirectives`,
-			// but only collecting references that were explicitly marked with `preserve="true"`.
-			// It is intuitive for developers to include references that they explicitly want part of
-			// their public API in a file like the entrypoint, which is likely to only contain reexports,
-			// and this picks those up.
-			this._collectReferenceDirectivesFromSourceFiles(nonExternalSourceFiles, true);
-
-			this._makeUniqueNames(entryPoint);
-
-			for (const starExportedExternalModule of starExportedExternalModules) {
-				if (starExportedExternalModule.externalModulePath !== undefined) {
-					this._starExportedExternalModulePaths.push(starExportedExternalModule.externalModulePath);
-				}
+		// Recursively create the remaining CollectorEntities after the top-level entities
+		// have been processed.
+		const alreadySeenAstEntities: Set<AstEntity> = new Set<AstEntity>();
+		for (const astEntity of processedAstEntities) {
+			this._recursivelyCreateEntities(astEntity, alreadySeenAstEntities);
+			if (astEntity instanceof AstSymbol) {
+				this.fetchSymbolMetadata(astEntity);
 			}
 		}
 
-		for (const entities of this._entitiesByAstEntryPoint.values()) {
-			Sort.sortBy(entities, (x) => x.getSortKey());
+		this._makeUniqueNames();
+
+		for (const starExportedExternalModule of astModuleExportInfo.starExportedExternalModules) {
+			if (starExportedExternalModule.externalModulePath !== undefined) {
+				this._starExportedExternalModulePaths.push(starExportedExternalModule.externalModulePath);
+			}
 		}
 
+		Sort.sortBy(this._entities, (x) => x.getSortKey());
 		Sort.sortSet(this._dtsTypeReferenceDirectives);
 		Sort.sortSet(this._dtsLibReferenceDirectives);
 		// eslint-disable-next-line @typescript-eslint/require-array-sort-compare
@@ -490,12 +433,7 @@ export class Collector {
 		return overloadIndex;
 	}
 
-	private _createCollectorEntity(
-		astEntity: AstEntity,
-		entryPoint: IWorkingPackageEntryPoint,
-		exportName?: string | undefined,
-		parent?: CollectorEntity,
-	): void {
+	private _createCollectorEntity(astEntity: AstEntity, exportName?: string, parent?: CollectorEntity): CollectorEntity {
 		let entity: CollectorEntity | undefined = this._entitiesByAstEntity.get(astEntity);
 
 		if (!entity) {
@@ -508,14 +446,8 @@ export class Collector {
 				this._entitiesBySymbol.set(astEntity.symbol, entity);
 			}
 
+			this._entities.push(entity);
 			this._collectReferenceDirectives(astEntity);
-		}
-
-		// add collectorEntity to the corresponding entry point
-		const entitiesOfAstModule: CollectorEntity[] = this._entitiesByAstEntryPoint.get(entryPoint) || [];
-		if (!entitiesOfAstModule.includes(entity)) {
-			entitiesOfAstModule.push(entity);
-			this._entitiesByAstEntryPoint.set(entryPoint, entitiesOfAstModule);
 		}
 
 		if (exportName) {
@@ -525,13 +457,11 @@ export class Collector {
 				entity.addExportName(exportName);
 			}
 		}
+
+		return entity;
 	}
 
-	private _recursivelyCreateEntities(
-		astEntity: AstEntity,
-		entryPoint: IWorkingPackageEntryPoint,
-		alreadySeenAstEntities: Set<AstEntity>,
-	): void {
+	private _recursivelyCreateEntities(astEntity: AstEntity, alreadySeenAstEntities: Set<AstEntity>): void {
 		if (alreadySeenAstEntities.has(astEntity)) return;
 		alreadySeenAstEntities.add(astEntity);
 
@@ -543,19 +473,19 @@ export class Collector {
 						// nested inside a namespace, only the namespace gets a collector entity. Note that this
 						// is not true for AstNamespaceImports below.
 						if (referencedAstEntity.parentAstSymbol === undefined) {
-							this._createCollectorEntity(referencedAstEntity, entryPoint);
+							this._createCollectorEntity(referencedAstEntity);
 						}
 					} else {
-						this._createCollectorEntity(referencedAstEntity, entryPoint);
+						this._createCollectorEntity(referencedAstEntity);
 					}
 
-					this._recursivelyCreateEntities(referencedAstEntity, entryPoint, alreadySeenAstEntities);
+					this._recursivelyCreateEntities(referencedAstEntity, alreadySeenAstEntities);
 				}
 			});
 		}
 
 		if (astEntity instanceof AstNamespaceImport) {
-			const astModuleExportInfo: IAstModuleExportInfo = astEntity.fetchAstModuleExportInfo(this);
+			const astModuleExportInfo: AstModuleExportInfo = astEntity.fetchAstModuleExportInfo(this);
 			const parentEntity: CollectorEntity | undefined = this._entitiesByAstEntity.get(astEntity);
 			if (!parentEntity) {
 				// This should never happen, as we've already created entities for all AstNamespaceImports.
@@ -566,16 +496,16 @@ export class Collector {
 
 			for (const [localExportName, localAstEntity] of astModuleExportInfo.exportedLocalEntities) {
 				// Create a CollectorEntity for each local export within an AstNamespaceImport entity.
-				this._createCollectorEntity(localAstEntity, entryPoint, localExportName, parentEntity);
-				this._recursivelyCreateEntities(localAstEntity, entryPoint, alreadySeenAstEntities);
+				this._createCollectorEntity(localAstEntity, localExportName, parentEntity);
+				this._recursivelyCreateEntities(localAstEntity, alreadySeenAstEntities);
 			}
 		}
 	}
 
 	/**
-	 * Ensures a unique name for each item in the entry point typings file.
+	 * Ensures a unique name for each item in the package typings file.
 	 */
-	private _makeUniqueNames(entryPoint: IWorkingPackageEntryPoint): void {
+	private _makeUniqueNames(): void {
 		// The following examples illustrate the nameForEmit heuristics:
 		//
 		// Example 1:
@@ -597,10 +527,8 @@ export class Collector {
 		// Set of names that should NOT be used when generating a unique nameForEmit
 		const usedNames: Set<string> = new Set<string>();
 
-		const entities: CollectorEntity[] = this._entitiesByAstEntryPoint.get(entryPoint) || [];
-
 		// First collect the names of explicit package exports, and perform a sanity check.
-		for (const entity of entities) {
+		for (const entity of this._entities) {
 			for (const exportName of entity.exportNames) {
 				if (usedNames.has(exportName)) {
 					// This should be impossible
@@ -612,7 +540,7 @@ export class Collector {
 		}
 
 		// Ensure that each entity has a unique nameForEmit
-		for (const entity of entities) {
+		for (const entity of this._entities) {
 			// What name would we ideally want to emit it as?
 			let idealNameForEmit: string;
 
@@ -989,80 +917,37 @@ export class Collector {
 	}
 
 	private _collectReferenceDirectives(astEntity: AstEntity): void {
-		// Here, we're collecting reference directives from source files that contain extracted
-		// definitions (i.e. - files that contain `export class ...`, `export interface ...`, ...).
-		// These references may or may not include the `preserve="true" attribute. In TS < 5.5,
-		// references that end up in .D.TS files may or may not be explicity written by the developer.
-		// In TS >= 5.5, only references that are explicitly authored and are marked with
-		// `preserve="true"` are included in the output. See https://github.com/microsoft/TypeScript/pull/57681
-		//
-		// The calls to `_collectReferenceDirectivesFromSourceFiles` in this function are
-		// preserving existing behavior, which is to include all reference directives
-		// regardless of whether they are explicitly authored or not, but only in files that
-		// contain definitions.
-
 		if (astEntity instanceof AstSymbol) {
 			const sourceFiles: ts.SourceFile[] = astEntity.astDeclarations.map((astDeclaration) =>
 				astDeclaration.declaration.getSourceFile(),
 			);
-			this._collectReferenceDirectivesFromSourceFiles(sourceFiles, false);
+			this._collectReferenceDirectivesFromSourceFiles(sourceFiles);
 			return;
 		}
 
 		if (astEntity instanceof AstNamespaceImport) {
 			const sourceFiles: ts.SourceFile[] = [astEntity.astModule.sourceFile];
-			this._collectReferenceDirectivesFromSourceFiles(sourceFiles, false);
+			this._collectReferenceDirectivesFromSourceFiles(sourceFiles);
 		}
 	}
 
-	private _collectReferenceDirectivesFromSourceFiles(
-		sourceFiles: Iterable<ts.SourceFile>,
-		onlyIncludeExplicitlyPreserved: boolean,
-	): void {
+	private _collectReferenceDirectivesFromSourceFiles(sourceFiles: ts.SourceFile[]): void {
 		const seenFilenames: Set<string> = new Set<string>();
 
 		for (const sourceFile of sourceFiles) {
-			if (sourceFile?.fileName) {
-				const { fileName, typeReferenceDirectives, libReferenceDirectives, text: sourceFileText } = sourceFile;
-				if (!seenFilenames.has(fileName)) {
-					seenFilenames.add(fileName);
+			if (sourceFile?.fileName && !seenFilenames.has(sourceFile.fileName)) {
+				seenFilenames.add(sourceFile.fileName);
 
-					for (const typeReferenceDirective of typeReferenceDirectives) {
-						const name: string | undefined = this._getReferenceDirectiveFromSourceFile(
-							sourceFileText,
-							typeReferenceDirective,
-							onlyIncludeExplicitlyPreserved,
-						);
-						if (name) {
-							this._dtsTypeReferenceDirectives.add(name);
-						}
-					}
+				for (const typeReferenceDirective of sourceFile.typeReferenceDirectives) {
+					const name: string = sourceFile.text.slice(typeReferenceDirective.pos, typeReferenceDirective.end);
+					this._dtsTypeReferenceDirectives.add(name);
+				}
 
-					for (const libReferenceDirective of libReferenceDirectives) {
-						const reference: string | undefined = this._getReferenceDirectiveFromSourceFile(
-							sourceFileText,
-							libReferenceDirective,
-							onlyIncludeExplicitlyPreserved,
-						);
-						if (reference) {
-							this._dtsLibReferenceDirectives.add(reference);
-						}
-					}
+				for (const libReferenceDirective of sourceFile.libReferenceDirectives) {
+					const name: string = sourceFile.text.slice(libReferenceDirective.pos, libReferenceDirective.end);
+					this._dtsLibReferenceDirectives.add(name);
 				}
 			}
 		}
-	}
-
-	private _getReferenceDirectiveFromSourceFile(
-		sourceFileText: string,
-		{ pos, end, preserve }: ts.FileReference,
-		onlyIncludeExplicitlyPreserved: boolean,
-	): string | undefined {
-		const reference: string = sourceFileText.slice(pos, end);
-		if (preserve || !onlyIncludeExplicitlyPreserved) {
-			return reference;
-		}
-
-		return undefined;
 	}
 }

@@ -1,11 +1,10 @@
 'use strict';
 
-const { AnonymousGuild } = require('./AnonymousGuild.js');
-const { WelcomeScreen } = require('./WelcomeScreen.js');
+const AnonymousGuild = require('./AnonymousGuild');
+const WelcomeScreen = require('./WelcomeScreen');
 
 /**
  * Represents a guild received from an invite, includes welcome screen data if available.
- *
  * @extends {AnonymousGuild}
  */
 class InviteGuild extends AnonymousGuild {
@@ -14,11 +13,10 @@ class InviteGuild extends AnonymousGuild {
 
     /**
      * The welcome screen for this invite guild
-     *
      * @type {?WelcomeScreen}
      */
-    this.welcomeScreen = data.welcome_screen === undefined ? null : new WelcomeScreen(this, data.welcome_screen);
+    this.welcomeScreen = data.welcome_screen !== undefined ? new WelcomeScreen(this, data.welcome_screen) : null;
   }
 }
 
-exports.InviteGuild = InviteGuild;
+module.exports = InviteGuild;

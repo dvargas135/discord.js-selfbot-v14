@@ -12,8 +12,8 @@ export class HTTPError extends Error {
 	/**
 	 * @param status - The status code of the response
 	 * @param statusText - The status text of the response
-	 * @param method - The method of the request that errored
-	 * @param url - The url of the request that errored
+	 * @param method - The method of the request that erred
+	 * @param url - The url of the request that erred
 	 * @param bodyData - The unparsed data for the request that errored
 	 */
 	public constructor(

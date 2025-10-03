@@ -16,11 +16,13 @@ pids
 .env*.local
 
 # Dist
+.contentlayer
 .next
-.source
+public/searchIndex
+src/styles/unocss.css
 
 # Miscellaneous
 .tmp
 .vscode
-.vercel
-next-env.d.ts
+lighthouse-results
+
